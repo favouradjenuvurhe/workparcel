@@ -4,7 +4,7 @@ Tags: parcel, shipment, tracking, delivery, logistics
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,6 +53,27 @@ Yes. Enable the data deletion option under Workparcel > Settings before uninstal
 
 == Changelog ==
 
-= 1.0.1 =
-* Maintenance update.
-* Improved release and update compatibility.
+= 1.0.2 =
+* Redesigned Workparcel admin interface.
+* Added Workparcel admin branding.
+* Added custom Workparcel admin menu icon.
+* Improved dashboard interface.
+* Improved shipment management interface.
+* Improved shipment forms.
+* Improved tracking event presentation.
+* Improved responsive admin experience.
+* Added/updated WordPress.org branding assets.
+* Improved accessibility and general UI consistency.
+* Fixed invalid nested-form markup on the Add/Edit Shipment screen.
+* Updated internal plugin version.
+
+= 1.0.0 =
+* Initial MVP release.
+
+== Upgrade Notice ==
+
+= 1.0.2 =
+Admin UI and branding refresh. No database changes; safe to update.
+
+= 1.0.0 =
+Initial release.
