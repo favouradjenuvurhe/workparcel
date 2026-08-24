@@ -9,27 +9,31 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy to WordPress.org SVN
+    name: Deploy Workparcel ${{ github.event.release.tag_name }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout GitHub release
+      - name: Checkout released code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 1
 
       - name: Get release version
         id: version
+        shell: bash
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
 
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid release tag: $GITHUB_REF_NAME"
+            echo "Invalid release tag: $TAG"
             echo "Use a tag such as v1.0.0"
             exit 1
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION"
 
       - name: Checkout WordPress.org SVN
         env:
@@ -44,18 +48,13 @@ jobs:
             https://plugins.svn.wordpress.org/workparcel \
             wordpress-svn
 
-      - name: Prepare SVN directories
-        run: |
-          mkdir -p wordpress-svn/trunk
-          mkdir -p wordpress-svn/tags
-
-      - name: Prepare plugin files
+      - name: Prepare plugin release
         env:
           VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
         run: |
           rm -rf wordpress-svn/trunk/*
           mkdir -p "wordpress-svn/tags/$VERSION"
-          rm -rf "wordpress-svn/tags/$VERSION"/*
 
           rsync -av \
             --exclude='.git/' \
@@ -76,6 +75,7 @@ jobs:
       - name: Validate readme.txt
         env:
           VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
         run: |
           if [[ ! -f wordpress-svn/trunk/readme.txt ]]; then
             echo "ERROR: readme.txt is missing."
@@ -86,9 +86,14 @@ jobs:
             "^[[:space:]]*Stable tag:[[:space:]]*$VERSION[[:space:]]*$" \
             wordpress-svn/trunk/readme.txt
           then
-            echo "ERROR: Stable tag in readme.txt does not match $VERSION"
+            echo "ERROR: Stable tag does not match $VERSION"
             exit 1
           fi
+
+      - name: Show SVN changes
+        run: |
+          cd wordpress-svn
+          svn status
 
       - name: Commit to WordPress.org SVN
         env:
@@ -98,9 +103,7 @@ jobs:
         run: |
           cd wordpress-svn
 
-          svn add --force trunk tags
-
-          svn status
+          svn add --force trunk "tags/$VERSION"
 
           svn commit \
             --username "$SVN_USERNAME" \
