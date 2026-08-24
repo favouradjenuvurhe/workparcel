@@ -98,7 +98,7 @@ jobs:
       - name: Show SVN changes
         run: |
           cd wordpress-svn
-          svn status
+          svn status 
 
       - name: Commit to WordPress.org SVN
         env:
