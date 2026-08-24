@@ -1,1 +1,371 @@
-.wp-workparcel-admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:24px 0}.wp-workparcel-stat,.wp-workparcel-panel{background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:18px;box-sizing:border-box}.wp-workparcel-stat span{display:block;color:#646970;margin-bottom:8px}.wp-workparcel-stat strong{font-size:28px}.wp-workparcel-editor{display:grid;grid-template-columns:2fr 2fr 1.2fr;gap:16px;max-width:1400px}.wp-workparcel-panel h2{margin-top:0}.wp-workparcel-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wp-workparcel-history{margin:0;padding:0;list-style:none}.wp-workparcel-history li{border-left:3px solid #2271b1;padding:8px 12px;margin-bottom:10px;background:#f6f7f7}@media(max-width:1000px){.wp-workparcel-editor{grid-template-columns:1fr}}
+/* Workparcel Admin UI — v1.0.2 */
+
+.wp-workparcel-wrap {
+	max-width: 1400px;
+}
+
+/* ---------- Branded header ---------- */
+.wp-workparcel-brand-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 12px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	padding: 16px 20px;
+	margin: 16px 0 20px;
+}
+
+.wp-workparcel-brand-identity {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+}
+
+.wp-workparcel-brand-logo {
+	width: 40px;
+	height: 40px;
+	flex: 0 0 40px;
+	border-radius: 9px;
+}
+
+.wp-workparcel-brand-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.wp-workparcel-brand-name {
+	font-size: 18px;
+	font-weight: 600;
+	color: #1d2327;
+	line-height: 1.3;
+}
+
+.wp-workparcel-brand-tagline {
+	font-size: 13px;
+	color: #646970;
+}
+
+.wp-workparcel-brand-actions {
+	flex: 0 0 auto;
+}
+
+/* ---------- Stat cards ---------- */
+.wp-workparcel-stat-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+	gap: 16px;
+	margin: 0 0 20px;
+}
+
+.wp-workparcel-stat {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	padding: 20px;
+	box-sizing: border-box;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+	border-top: 3px solid #2563eb;
+}
+
+.wp-workparcel-stat-pending { border-top-color: #b45309; }
+.wp-workparcel-stat-in_transit { border-top-color: #2563eb; }
+.wp-workparcel-stat-delivered { border-top-color: #15803d; }
+
+.wp-workparcel-stat-label {
+	display: block;
+	color: #646970;
+	margin-bottom: 8px;
+	font-size: 13px;
+}
+
+.wp-workparcel-stat-value {
+	font-size: 28px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+/* ---------- Panels ---------- */
+.wp-workparcel-panel {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	padding: 20px;
+	box-sizing: border-box;
+	margin-bottom: 20px;
+}
+
+.wp-workparcel-panel h2 {
+	margin-top: 0;
+}
+
+.wp-workparcel-panel-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.wp-workparcel-panel-heading h2 {
+	margin-bottom: 0;
+}
+
+.wp-workparcel-link {
+	font-size: 13px;
+	text-decoration: none;
+}
+
+/* ---------- Editor layout ---------- */
+.wp-workparcel-editor {
+	display: grid;
+	grid-template-columns: 2fr 1.2fr;
+	gap: 20px;
+	align-items: start;
+}
+
+.wp-workparcel-two {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.wp-workparcel-event-panel {
+	max-width: 640px;
+}
+
+/* ---------- Filters ---------- */
+.wp-workparcel-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.wp-workparcel-filters input[type="search"] {
+	flex: 1 1 260px;
+	min-width: 0;
+}
+
+/* ---------- Table ---------- */
+.wp-workparcel-table {
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.wp-workparcel-actions {
+	white-space: nowrap;
+}
+
+.wp-workparcel-inline-form {
+	display: inline;
+	margin-left: 8px;
+}
+
+/* ---------- Status badges ---------- */
+.wp-workparcel-badge {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+	background: #f0f0f1;
+	color: #3c434a;
+	border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.wp-workparcel-badge-pending { background: #fef3c7; color: #92400e; }
+.wp-workparcel-badge-processing { background: #e0e7ff; color: #3730a3; }
+.wp-workparcel-badge-picked_up { background: #e0e7ff; color: #3730a3; }
+.wp-workparcel-badge-in_transit { background: #dbeafe; color: #1e40af; }
+.wp-workparcel-badge-at_facility { background: #dbeafe; color: #1e40af; }
+.wp-workparcel-badge-out_for_delivery { background: #cffafe; color: #155e75; }
+.wp-workparcel-badge-delivered { background: #dcfce7; color: #166534; }
+.wp-workparcel-badge-failed_delivery { background: #fee2e2; color: #991b1b; }
+.wp-workparcel-badge-cancelled { background: #f3f4f6; color: #4b5563; }
+
+/* ---------- Empty state ---------- */
+.wp-workparcel-empty {
+	text-align: center;
+	padding: 40px 20px;
+	color: #646970;
+}
+
+.wp-workparcel-empty p {
+	margin-bottom: 14px;
+	font-size: 14px;
+}
+
+.wp-workparcel-muted-text {
+	color: #646970;
+}
+
+/* ---------- Timeline ---------- */
+.wp-workparcel-timeline {
+	position: relative;
+	margin-bottom: 20px;
+}
+
+.wp-workparcel-event {
+	display: flex;
+	gap: 14px;
+	padding: 0 0 20px;
+	position: relative;
+}
+
+.wp-workparcel-event:not(:last-child)::before {
+	content: "";
+	position: absolute;
+	left: 5px;
+	top: 16px;
+	bottom: 0;
+	width: 2px;
+	background: #dcdcde;
+}
+
+.wp-workparcel-dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	margin-top: 5px;
+	flex: 0 0 12px;
+	background: #2563eb;
+	position: relative;
+	z-index: 1;
+}
+
+.wp-workparcel-event-body strong {
+	display: block;
+}
+
+.wp-workparcel-location {
+	display: block;
+	color: #646970;
+	font-size: 13px;
+	margin-top: 3px;
+}
+
+.wp-workparcel-event-body p {
+	margin: 5px 0;
+}
+
+.wp-workparcel-event-body small {
+	color: #646970;
+}
+
+/* ---------- Settings tabs ---------- */
+.wp-workparcel-tabs {
+	display: flex;
+	gap: 4px;
+	border-bottom: 1px solid #dcdcde;
+	margin: 16px 0 0;
+}
+
+.wp-workparcel-tab {
+	background: none;
+	border: 1px solid transparent;
+	border-bottom: none;
+	padding: 10px 16px;
+	font-size: 14px;
+	cursor: pointer;
+	border-radius: 6px 6px 0 0;
+	color: #50575e;
+}
+
+.wp-workparcel-tab:hover {
+	color: #1d2327;
+}
+
+.wp-workparcel-tab.is-active {
+	background: #fff;
+	border-color: #dcdcde;
+	color: #1d2327;
+	font-weight: 600;
+	position: relative;
+	top: 1px;
+}
+
+.wp-workparcel-tab-panel {
+	border-radius: 0 0 10px 10px;
+	margin-top: 0;
+}
+
+/* ---------- Accessibility ---------- */
+.wp-workparcel-tab:focus-visible,
+.wp-workparcel-badge:focus-visible,
+.wp-workparcel-link:focus-visible {
+	outline: 2px solid #2563eb;
+	outline-offset: 2px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+	.wp-workparcel-editor {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 782px) {
+	.wp-workparcel-two {
+		grid-template-columns: 1fr;
+	}
+
+	.wp-workparcel-brand-header {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.wp-workparcel-filters {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	/* Stack the shipments table into cards on small screens */
+	.wp-workparcel-table thead {
+		display: none;
+	}
+
+	.wp-workparcel-table,
+	.wp-workparcel-table tbody,
+	.wp-workparcel-table tr,
+	.wp-workparcel-table td {
+		display: block;
+		width: 100%;
+	}
+
+	.wp-workparcel-table tr {
+		margin-bottom: 14px;
+		border: 1px solid #dcdcde;
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	.wp-workparcel-table td {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+		text-align: right;
+		padding: 10px 12px;
+		border-bottom: 1px solid #f0f0f1;
+	}
+
+	.wp-workparcel-table td:last-child {
+		border-bottom: none;
+	}
+
+	.wp-workparcel-table td::before {
+		content: attr(data-label);
+		font-weight: 600;
+		color: #1d2327;
+		text-align: left;
+	}
+
+	.wp-workparcel-actions {
+		white-space: normal;
+	}
+}
