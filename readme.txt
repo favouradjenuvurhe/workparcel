@@ -4,7 +4,7 @@ Tags: parcel, shipment, tracking, delivery, logistics
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,3 +60,9 @@ Yes. Enable the data deletion option under Workparcel > Settings before uninstal
 
 = 1.0.0 =
 Initial release.
+
+== Changelog ==
+
+= 1.0.1 =
+* Maintenance update.
+* Improved release and update compatibility.
