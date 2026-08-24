@@ -53,16 +53,6 @@ Yes. Enable the data deletion option under Workparcel > Settings before uninstal
 
 == Changelog ==
 
-= 1.0.0 =
-* Initial MVP release.
-
-== Upgrade Notice ==
-
-= 1.0.0 =
-Initial release.
-
-== Changelog ==
-
 = 1.0.1 =
 * Maintenance update.
 * Improved release and update compatibility.
