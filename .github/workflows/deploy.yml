@@ -4,12 +4,19 @@ on:
   release:
     types: [published]
 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Plugin version to deploy"
+        required: true
+        default: "1.0.0"
+
 permissions:
   contents: read
 
 jobs:
   deploy:
-    name: Deploy Workparcel ${{ github.event.release.tag_name }}
+    name: Deploy Workparcel
     runs-on: ubuntu-latest
 
     steps:
@@ -18,33 +25,47 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y subversion
 
-      - name: Checkout released code
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.release.tag_name }}
-          fetch-depth: 1
-
-      - name: Get release version
+      - name: Determine version
         id: version
         shell: bash
         run: |
-          TAG="${{ github.event.release.tag_name }}"
-          VERSION="${TAG#v}"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+            VERSION="${TAG#v}"
+          fi
 
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid release tag: $TAG"
-            echo "Use a tag such as v1.0.0"
+            echo "ERROR: Invalid version: $VERSION"
+            echo "Expected format: 1.0.0"
             exit 1
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Release version: $VERSION"
+          echo "Deploying Workparcel version: $VERSION"
+
+      - name: Checkout plugin source
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 1
 
       - name: Checkout WordPress.org SVN
         env:
           SVN_USERNAME: ${{ secrets.WP_SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.WP_SVN_PASSWORD }}
         run: |
+          if [[ -z "$SVN_USERNAME" ]]; then
+            echo "ERROR: WP_SVN_USERNAME secret is missing."
+            exit 1
+          fi
+
+          if [[ -z "$SVN_PASSWORD" ]]; then
+            echo "ERROR: WP_SVN_PASSWORD secret is missing."
+            exit 1
+          fi
+
           svn checkout \
             --username "$SVN_USERNAME" \
             --password "$SVN_PASSWORD" \
@@ -53,14 +74,28 @@ jobs:
             https://plugins.svn.wordpress.org/workparcel \
             wordpress-svn
 
-      - name: Prepare plugin release
+      - name: Prepare SVN directories
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir -p wordpress-svn/trunk
+          mkdir -p wordpress-svn/tags
+
+          rm -rf wordpress-svn/trunk/*
+
+          if [[ -d "wordpress-svn/tags/$VERSION" ]]; then
+            echo "Version $VERSION already exists in WordPress.org SVN."
+            echo "Refusing to overwrite an existing release tag."
+            exit 1
+          fi
+
+          mkdir -p "wordpress-svn/tags/$VERSION"
+
+      - name: Copy plugin to SVN
         env:
           VERSION: ${{ steps.version.outputs.version }}
         shell: bash
         run: |
-          rm -rf wordpress-svn/trunk/*
-          mkdir -p "wordpress-svn/tags/$VERSION"
-
           rsync -av \
             --exclude='.git/' \
             --exclude='.github/' \
@@ -77,23 +112,25 @@ jobs:
             --exclude='wordpress-svn/' \
             ./ "wordpress-svn/tags/$VERSION/"
 
-      - name: Validate readme.txt
+      - name: Validate plugin files
         env:
           VERSION: ${{ steps.version.outputs.version }}
         shell: bash
         run: |
-          if [[ ! -f wordpress-svn/trunk/readme.txt ]]; then
+          if [[ ! -f "wordpress-svn/trunk/readme.txt" ]]; then
             echo "ERROR: readme.txt is missing."
             exit 1
           fi
 
           if ! grep -Eq \
             "^[[:space:]]*Stable tag:[[:space:]]*$VERSION[[:space:]]*$" \
-            wordpress-svn/trunk/readme.txt
+            "wordpress-svn/trunk/readme.txt"
           then
-            echo "ERROR: Stable tag does not match $VERSION"
+            echo "ERROR: readme.txt Stable tag does not match $VERSION"
             exit 1
           fi
+
+          echo "Plugin validation passed."
 
       - name: Show SVN changes
         run: |
@@ -116,3 +153,5 @@ jobs:
             --non-interactive \
             --trust-server-cert \
             -m "Release Workparcel $VERSION"
+
+          echo "Successfully deployed Workparcel $VERSION to WordPress.org SVN."
