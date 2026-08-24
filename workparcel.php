@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Workparcel
  * Description: A lightweight parcel and shipment tracking system for WordPress.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: faav11_
  * License: GPL-2.0-or-later
  * Text Domain: workparcel
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WORKPARCEL_VERSION', '1.0.2' );
+define( 'WORKPARCEL_VERSION', '1.0.3' );
 define( 'WORKPARCEL_FILE', __FILE__ );
 define( 'WORKPARCEL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WORKPARCEL_URL', plugin_dir_url( __FILE__ ) );
