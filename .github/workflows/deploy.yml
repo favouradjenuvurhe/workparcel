@@ -1,1 +1,110 @@
+name: Deploy Workparcel to WordPress.org
 
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to WordPress.org SVN
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout GitHub release
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get release version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release tag: $GITHUB_REF_NAME"
+            echo "Use a tag such as v1.0.0"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout WordPress.org SVN
+        env:
+          SVN_USERNAME: ${{ secrets.WP_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_SVN_PASSWORD }}
+        run: |
+          svn checkout \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --non-interactive \
+            --trust-server-cert \
+            https://plugins.svn.wordpress.org/workparcel \
+            wordpress-svn
+
+      - name: Prepare SVN directories
+        run: |
+          mkdir -p wordpress-svn/trunk
+          mkdir -p wordpress-svn/tags
+
+      - name: Prepare plugin files
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          rm -rf wordpress-svn/trunk/*
+          mkdir -p "wordpress-svn/tags/$VERSION"
+          rm -rf "wordpress-svn/tags/$VERSION"/*
+
+          rsync -av \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.gitignore' \
+            --exclude='README.md' \
+            --exclude='wordpress-svn/' \
+            ./ wordpress-svn/trunk/
+
+          rsync -av \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.gitignore' \
+            --exclude='README.md' \
+            --exclude='wordpress-svn/' \
+            ./ "wordpress-svn/tags/$VERSION/"
+
+      - name: Validate readme.txt
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [[ ! -f wordpress-svn/trunk/readme.txt ]]; then
+            echo "ERROR: readme.txt is missing."
+            exit 1
+          fi
+
+          if ! grep -Eq \
+            "^[[:space:]]*Stable tag:[[:space:]]*$VERSION[[:space:]]*$" \
+            wordpress-svn/trunk/readme.txt
+          then
+            echo "ERROR: Stable tag in readme.txt does not match $VERSION"
+            exit 1
+          fi
+
+      - name: Commit to WordPress.org SVN
+        env:
+          SVN_USERNAME: ${{ secrets.WP_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_SVN_PASSWORD }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cd wordpress-svn
+
+          svn add --force trunk tags
+
+          svn status
+
+          svn commit \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --non-interactive \
+            --trust-server-cert \
+            -m "Release Workparcel $VERSION"
