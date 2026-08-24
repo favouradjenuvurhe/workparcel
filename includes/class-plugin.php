@@ -23,7 +23,7 @@ class Plugin {
 	}
 
 	public function admin_menu() {
-		add_menu_page( 'Workparcel', 'Workparcel', 'workparcel_view_shipments', 'workparcel', array( $this, 'dashboard' ), 'dashicons-location-alt', 26 );
+		add_menu_page( 'Workparcel', 'Workparcel', 'workparcel_view_shipments', 'workparcel', array( $this, 'dashboard' ), $this->menu_icon(), 26 );
 		add_submenu_page( 'workparcel', 'Dashboard', 'Dashboard', 'workparcel_view_shipments', 'workparcel', array( $this, 'dashboard' ) );
 		add_submenu_page( 'workparcel', 'Shipments', 'Shipments', 'workparcel_view_shipments', 'workparcel-shipments', array( $this, 'shipments' ) );
 		add_submenu_page( 'workparcel', 'Add Shipment', 'Add Shipment', 'workparcel_create_shipments', 'workparcel-add', array( $this, 'edit_shipment' ) );
@@ -33,6 +33,17 @@ class Plugin {
 	public function admin_assets( $hook ) {
 		if ( strpos( $hook, 'workparcel' ) === false ) return;
 		wp_enqueue_style( 'workparcel-admin', WORKPARCEL_URL . 'admin/css/admin.css', array(), WORKPARCEL_VERSION );
+		wp_enqueue_script( 'workparcel-admin', WORKPARCEL_URL . 'admin/js/admin.js', array(), WORKPARCEL_VERSION, true );
+	}
+
+	/**
+	 * Base64-encoded SVG data URI for the WordPress admin menu icon.
+	 * Core recolors black-filled SVG icons to match the active admin color scheme.
+	 */
+	private function menu_icon() {
+		$svg = file_get_contents( WORKPARCEL_DIR . 'admin/images/menu-icon.svg' );
+		if ( false === $svg ) return 'dashicons-location-alt';
+		return 'data:image/svg+xml;base64,' . base64_encode( $svg );
 	}
 
 	public function public_assets() {
@@ -52,6 +63,7 @@ class Plugin {
 		foreach ( Shipment::statuses() as $key => $label ) {
 			$stats[ $key ] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", $key ) );
 		}
+		$recent = Shipment::all( array( 'page' => 1, 'per_page' => 5 ) );
 		include WORKPARCEL_DIR . 'admin/views/dashboard.php';
 	}
 
