@@ -4,7 +4,7 @@ Tags: parcel, shipment, tracking, delivery, logistics
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,7 +53,7 @@ Yes. Enable the data deletion option under Workparcel > Settings before uninstal
 
 == Changelog ==
 
-= 1.0.2 =
+= 1.0.3 =
 * Redesigned Workparcel admin interface.
 * Added Workparcel admin branding.
 * Added custom Workparcel admin menu icon.
@@ -72,7 +72,7 @@ Yes. Enable the data deletion option under Workparcel > Settings before uninstal
 
 == Upgrade Notice ==
 
-= 1.0.2 =
+= 1.0.3 =
 Admin UI and branding refresh. No database changes; safe to update.
 
 = 1.0.0 =
