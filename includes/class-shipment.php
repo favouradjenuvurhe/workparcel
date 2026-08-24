@@ -1,0 +1,140 @@
+<?php
+namespace Workparcel;
+
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+class Shipment {
+	public static function statuses() {
+		return array(
+			'pending'          => __( 'Pending', 'workparcel' ),
+			'processing'       => __( 'Processing', 'workparcel' ),
+			'picked_up'        => __( 'Picked Up', 'workparcel' ),
+			'in_transit'       => __( 'In Transit', 'workparcel' ),
+			'at_facility'      => __( 'At Facility', 'workparcel' ),
+			'out_for_delivery' => __( 'Out for Delivery', 'workparcel' ),
+			'delivered'        => __( 'Delivered', 'workparcel' ),
+			'failed_delivery'  => __( 'Failed Delivery', 'workparcel' ),
+			'cancelled'        => __( 'Cancelled', 'workparcel' ),
+		);
+	}
+
+	public static function generate_tracking_number() {
+		global $wpdb;
+		$settings = Settings::get();
+		$prefix = preg_replace( '/[^A-Z0-9-]/i', '', (string) $settings['tracking_prefix'] );
+		$prefix = $prefix ?: 'WP';
+
+		do {
+			$number = $prefix . '-' . strtoupper( wp_generate_password( 8, false, false ) );
+			$exists = $wpdb->get_var( $wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}workparcel_shipments WHERE tracking_number = %s LIMIT 1",
+				$number
+			) );
+		} while ( $exists );
+
+		return $number;
+	}
+
+	public static function get( $id ) {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}workparcel_shipments WHERE id = %d",
+			$id
+		) );
+	}
+
+	public static function find_by_tracking( $tracking ) {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}workparcel_shipments WHERE tracking_number = %s",
+			strtoupper( sanitize_text_field( $tracking ) )
+		) );
+	}
+
+	public static function all( $args = array() ) {
+		global $wpdb;
+		$page = max( 1, absint( $args['page'] ?? 1 ) );
+		$per_page = min( 100, max( 1, absint( $args['per_page'] ?? 20 ) ) );
+		$offset = ( $page - 1 ) * $per_page;
+		$where = 'WHERE 1=1';
+		$params = array();
+
+		if ( ! empty( $args['status'] ) && isset( self::statuses()[ $args['status'] ] ) ) {
+			$where .= ' AND status = %s';
+			$params[] = $args['status'];
+		}
+		if ( ! empty( $args['search'] ) ) {
+			$search = '%' . $wpdb->esc_like( sanitize_text_field( $args['search'] ) ) . '%';
+			$where .= ' AND (tracking_number LIKE %s OR title LIKE %s OR receiver_name LIKE %s)';
+			$params[] = $search; $params[] = $search; $params[] = $search;
+		}
+
+		$count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}workparcel_shipments $where";
+		$total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, $params ) );
+
+		$sql = "SELECT * FROM {$wpdb->prefix}workparcel_shipments $where ORDER BY created_at DESC LIMIT %d OFFSET %d";
+		$params[] = $per_page; $params[] = $offset;
+		$items = $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
+
+		return array( 'items' => $items, 'total' => $total, 'pages' => (int) ceil( $total / $per_page ) );
+	}
+
+	public static function save( $data, $id = 0 ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'workparcel_shipments';
+		$statuses = self::statuses();
+		$status = isset( $statuses[ $data['status'] ] ) ? $data['status'] : 'pending';
+
+		$row = array(
+			'tracking_number' => $data['tracking_number'] ?: self::generate_tracking_number(),
+			'reference' => sanitize_text_field( $data['reference'] ?? '' ),
+			'title' => sanitize_text_field( $data['title'] ?? '' ),
+			'sender_name' => sanitize_text_field( $data['sender_name'] ?? '' ),
+			'sender_email' => sanitize_email( $data['sender_email'] ?? '' ),
+			'sender_phone' => sanitize_text_field( $data['sender_phone'] ?? '' ),
+			'sender_address' => sanitize_textarea_field( $data['sender_address'] ?? '' ),
+			'receiver_name' => sanitize_text_field( $data['receiver_name'] ?? '' ),
+			'receiver_email' => sanitize_email( $data['receiver_email'] ?? '' ),
+			'receiver_phone' => sanitize_text_field( $data['receiver_phone'] ?? '' ),
+			'receiver_address' => sanitize_textarea_field( $data['receiver_address'] ?? '' ),
+			'origin' => sanitize_text_field( $data['origin'] ?? '' ),
+			'destination' => sanitize_text_field( $data['destination'] ?? '' ),
+			'description' => sanitize_textarea_field( $data['description'] ?? '' ),
+			'parcel_type' => sanitize_text_field( $data['parcel_type'] ?? '' ),
+			'weight' => max( 0, (float) ( $data['weight'] ?? 0 ) ),
+			'quantity' => max( 1, absint( $data['quantity'] ?? 1 ) ),
+			'shipping_fee' => max( 0, (float) ( $data['shipping_fee'] ?? 0 ) ),
+			'status' => $status,
+			'estimated_delivery' => ! empty( $data['estimated_delivery'] ) ? sanitize_text_field( $data['estimated_delivery'] ) : null,
+			'updated_at' => current_time( 'mysql' ),
+		);
+
+		$formats = array( '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%d','%f','%s','%s','%s' );
+
+		if ( $id ) {
+			$old = self::get( $id );
+			$result = $wpdb->update( $table, $row, array( 'id' => $id ), $formats, array( '%d' ) );
+			if ( false === $result ) return new \WP_Error( 'save_failed', __( 'Could not update shipment.', 'workparcel' ) );
+			if ( $old && $old->status !== $status ) {
+				Tracking::add_event( $id, $status, '', sprintf( __( 'Shipment status changed to %s.', 'workparcel' ), $statuses[ $status ] ) );
+			}
+			return $id;
+		}
+
+		$row['created_at'] = current_time( 'mysql' );
+		$formats[] = '%s';
+		$result = $wpdb->insert( $table, $row, $formats );
+		if ( false === $result ) return new \WP_Error( 'save_failed', __( 'Could not create shipment.', 'workparcel' ) );
+
+		$new_id = (int) $wpdb->insert_id;
+		Tracking::add_event( $new_id, $status, '', __( 'Shipment created.', 'workparcel' ) );
+		return $new_id;
+	}
+
+	public static function delete( $id ) {
+		global $wpdb;
+		$id = absint( $id );
+		$wpdb->delete( $wpdb->prefix . 'workparcel_tracking_events', array( 'shipment_id' => $id ), array( '%d' ) );
+		return $wpdb->delete( $wpdb->prefix . 'workparcel_shipments', array( 'id' => $id ), array( '%d' ) );
+	}
+}
