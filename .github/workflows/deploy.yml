@@ -80,6 +80,7 @@ jobs:
         run: |
           mkdir -p wordpress-svn/trunk
           mkdir -p wordpress-svn/tags
+          mkdir -p wordpress-svn/assets
 
           rm -rf wordpress-svn/trunk/*
 
@@ -111,6 +112,18 @@ jobs:
             --exclude='README.md' \
             --exclude='wordpress-svn/' \
             ./ "wordpress-svn/tags/$VERSION/"
+
+      - name: Sync WordPress.org directory assets (icon, banner, screenshots)
+        run: |
+          # This is the SVN-root "assets" directory — separate from trunk/tags —
+          # that WordPress.org reads for the plugin's icon, banner, and screenshots.
+          # It must stay in sync independently of the plugin code itself.
+          if [[ -d "assets" ]]; then
+            rsync -av --include='*.png' --include='*.jpg' --include='*.svg' --exclude='*' \
+              ./assets/ wordpress-svn/assets/
+          else
+            echo "No top-level assets/ directory found in the repo; skipping directory-asset sync."
+          fi
 
       - name: Validate plugin files
         env:
@@ -145,7 +158,7 @@ jobs:
         run: |
           cd wordpress-svn
 
-          svn add --force trunk "tags/$VERSION"
+          svn add --force trunk "tags/$VERSION" assets
 
           svn commit \
             --username "$SVN_USERNAME" \

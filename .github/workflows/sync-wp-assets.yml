@@ -1,0 +1,85 @@
+name: Sync WordPress.org Directory Assets
+
+# Run this any time your icon, banner, or screenshots change.
+# It only touches the SVN-root "assets" directory (icon/banner/screenshots
+# shown on the WordPress.org plugin page) — it never touches trunk or tags,
+# so it's safe to run regardless of what version is currently released.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  sync-assets:
+    name: Sync directory assets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Subversion
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y subversion
+
+      - name: Checkout plugin source
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Checkout WordPress.org SVN (assets only)
+        env:
+          SVN_USERNAME: ${{ secrets.WP_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_SVN_PASSWORD }}
+        run: |
+          if [[ -z "$SVN_USERNAME" || -z "$SVN_PASSWORD" ]]; then
+            echo "ERROR: WP_SVN_USERNAME or WP_SVN_PASSWORD secret is missing."
+            exit 1
+          fi
+
+          # Shallow checkout of the repo root, then pull the assets folder in full —
+          # avoids downloading all of trunk/ and every tag just to update images.
+          svn checkout --depth=empty \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --non-interactive \
+            --trust-server-cert \
+            https://plugins.svn.wordpress.org/workparcel \
+            wordpress-svn
+
+          cd wordpress-svn
+          svn update --set-depth=infinity --non-interactive --trust-server-cert assets
+
+      - name: Sync assets
+        run: |
+          if [[ ! -d "assets" ]]; then
+            echo "ERROR: No top-level assets/ directory found in the repo."
+            exit 1
+          fi
+
+          rsync -av --include='*.png' --include='*.jpg' --include='*.svg' --exclude='*' \
+            ./assets/ wordpress-svn/assets/
+
+      - name: Show SVN changes
+        run: |
+          cd wordpress-svn
+          svn status
+
+      - name: Commit to WordPress.org SVN
+        env:
+          SVN_USERNAME: ${{ secrets.WP_SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WP_SVN_PASSWORD }}
+        run: |
+          cd wordpress-svn
+
+          svn add --force assets
+
+          svn commit \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --non-interactive \
+            --trust-server-cert \
+            -m "Sync WordPress.org directory assets (icon, banner, screenshots)"
+
+          echo "Successfully synced directory assets to WordPress.org SVN."
