@@ -1,4 +1,9 @@
-/* Workparcel Admin UI — v1.0.2 */
+/* Workparcel Admin UI — v1.0.7 */
+
+.wp-workparcel-wrap,
+.wp-workparcel-wrap * {
+	box-sizing: border-box;
+}
 
 .wp-workparcel-wrap {
 	max-width: 1400px;
@@ -69,11 +74,11 @@
 	padding: 20px;
 	box-sizing: border-box;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-	border-top: 3px solid #2563eb;
+	border-top: 3px solid var(--wp-workparcel-accent, #2563eb);
 }
 
 .wp-workparcel-stat-pending { border-top-color: #b45309; }
-.wp-workparcel-stat-in_transit { border-top-color: #2563eb; }
+.wp-workparcel-stat-in_transit { border-top-color: var(--wp-workparcel-accent, #2563eb); }
 .wp-workparcel-stat-delivered { border-top-color: #15803d; }
 
 .wp-workparcel-stat-label {
@@ -135,6 +140,81 @@
 
 .wp-workparcel-event-panel {
 	max-width: 640px;
+}
+
+/* ---------- Form fields ---------- */
+.wp-workparcel-panel p {
+	margin: 0 0 14px;
+}
+
+.wp-workparcel-panel label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 6px;
+	color: #1d2327;
+}
+
+.wp-workparcel-panel input[type="text"],
+.wp-workparcel-panel input[type="email"],
+.wp-workparcel-panel input[type="number"],
+.wp-workparcel-panel input[type="date"],
+.wp-workparcel-panel input[type="datetime-local"],
+.wp-workparcel-panel input[type="search"],
+.wp-workparcel-panel textarea,
+.wp-workparcel-panel select {
+	width: 100%;
+	max-width: 100%;
+	padding: 9px 12px;
+	border: 1px solid #949494;
+	border-radius: 6px;
+	font-size: 14px;
+	line-height: 1.5;
+	background: #fff;
+	color: #1d2327;
+	box-shadow: none;
+	transition: border-color 0.15s ease;
+}
+
+.wp-workparcel-panel textarea {
+	resize: vertical;
+	min-height: 80px;
+}
+
+.wp-workparcel-panel input:focus,
+.wp-workparcel-panel textarea:focus,
+.wp-workparcel-panel select:focus {
+	border-color: var(--wp-workparcel-accent, #2563eb);
+	outline: 2px solid transparent;
+	box-shadow: 0 0 0 1px var(--wp-workparcel-accent, #2563eb);
+}
+
+.wp-workparcel-panel input::placeholder,
+.wp-workparcel-panel textarea::placeholder {
+	color: #8c8f94;
+}
+
+.wp-workparcel-filters input[type="search"],
+.wp-workparcel-filters select {
+	padding: 9px 12px;
+	border: 1px solid #949494;
+	border-radius: 6px;
+	font-size: 14px;
+	background: #fff;
+}
+
+.wp-workparcel-logo-field {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.wp-workparcel-logo-field img {
+	max-height: 48px;
+	max-width: 160px;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	padding: 4px;
+	background: #fff;
 }
 
 /* ---------- Filters ---------- */
@@ -233,7 +313,7 @@
 	border-radius: 50%;
 	margin-top: 5px;
 	flex: 0 0 12px;
-	background: #2563eb;
+	background: var(--wp-workparcel-accent, #2563eb);
 	position: relative;
 	z-index: 1;
 }
@@ -257,7 +337,19 @@
 	color: #646970;
 }
 
-/* ---------- Settings tabs ---------- */
+/* ---------- Settings tabs (pure CSS, no JS required) ---------- */
+.wp-workparcel-tabs-wrap {
+	position: relative;
+}
+
+.wp-workparcel-tab-radio {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+	pointer-events: none;
+}
+
 .wp-workparcel-tabs {
 	display: flex;
 	gap: 4px;
@@ -274,13 +366,24 @@
 	cursor: pointer;
 	border-radius: 6px 6px 0 0;
 	color: #50575e;
+	display: inline-block;
 }
 
 .wp-workparcel-tab:hover {
 	color: #1d2327;
 }
 
-.wp-workparcel-tab.is-active {
+.wp-workparcel-tab-panel {
+	border-radius: 0 0 10px 10px;
+	margin-top: 0;
+	display: none;
+}
+
+#wp-wc-tab-general:checked ~ .wp-workparcel-tabs label[for="wp-wc-tab-general"],
+#wp-wc-tab-tracking:checked ~ .wp-workparcel-tabs label[for="wp-wc-tab-tracking"],
+#wp-wc-tab-appearance:checked ~ .wp-workparcel-tabs label[for="wp-wc-tab-appearance"],
+#wp-wc-tab-notifications:checked ~ .wp-workparcel-tabs label[for="wp-wc-tab-notifications"],
+#wp-wc-tab-advanced:checked ~ .wp-workparcel-tabs label[for="wp-wc-tab-advanced"] {
 	background: #fff;
 	border-color: #dcdcde;
 	color: #1d2327;
@@ -289,16 +392,24 @@
 	top: 1px;
 }
 
-.wp-workparcel-tab-panel {
-	border-radius: 0 0 10px 10px;
-	margin-top: 0;
+#wp-wc-tab-general:checked ~ #wp-workparcel-panel-general,
+#wp-wc-tab-tracking:checked ~ #wp-workparcel-panel-tracking,
+#wp-wc-tab-appearance:checked ~ #wp-workparcel-panel-appearance,
+#wp-wc-tab-notifications:checked ~ #wp-workparcel-panel-notifications,
+#wp-wc-tab-advanced:checked ~ #wp-workparcel-panel-advanced {
+	display: block;
+}
+
+.wp-workparcel-tab-radio:focus-visible ~ .wp-workparcel-tabs label {
+	outline: 2px solid var(--wp-workparcel-accent, #2563eb);
+	outline-offset: 2px;
 }
 
 /* ---------- Accessibility ---------- */
 .wp-workparcel-tab:focus-visible,
 .wp-workparcel-badge:focus-visible,
 .wp-workparcel-link:focus-visible {
-	outline: 2px solid #2563eb;
+	outline: 2px solid var(--wp-workparcel-accent, #2563eb);
 	outline-offset: 2px;
 }
 
