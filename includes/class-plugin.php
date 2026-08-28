@@ -33,7 +33,19 @@ class Plugin {
 	public function admin_assets( $hook ) {
 		if ( strpos( $hook, 'workparcel' ) === false ) return;
 		wp_enqueue_style( 'workparcel-admin', WORKPARCEL_URL . 'admin/css/admin.css', array(), WORKPARCEL_VERSION );
+		$accent = sanitize_hex_color( Settings::get()['accent_color'] ) ?: '#2563eb';
+		wp_add_inline_style( 'workparcel-admin', ':root{--wp-workparcel-accent: ' . $accent . ';}' );
 		wp_enqueue_script( 'workparcel-admin', WORKPARCEL_URL . 'admin/js/admin.js', array(), WORKPARCEL_VERSION, true );
+
+		if ( strpos( $hook, 'workparcel-settings' ) !== false ) {
+			wp_enqueue_media();
+			wp_enqueue_style( 'wp-color-picker' );
+			wp_enqueue_script( 'workparcel-settings', WORKPARCEL_URL . 'admin/js/settings.js', array( 'jquery', 'wp-color-picker' ), WORKPARCEL_VERSION, true );
+			wp_localize_script( 'workparcel-settings', 'workparcelSettings', array(
+				'selectLogoTitle' => __( 'Select company logo', 'workparcel' ),
+				'useLogoText' => __( 'Use this logo', 'workparcel' ),
+			) );
+		}
 	}
 
 	/**
@@ -135,12 +147,18 @@ class Plugin {
 		$location = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
 		$description = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
 		$event_date = isset( $_POST['event_date'] ) ? sanitize_text_field( wp_unslash( $_POST['event_date'] ) ) : '';
+		$existing = Shipment::get( $id );
+		$old_status = $existing ? $existing->status : '';
 		Tracking::add_event( $id, $status, $location, $description, $event_date );
 		global $wpdb;
 		$wpdb->update( $wpdb->prefix . 'workparcel_shipments', array(
 			'status' => $status,
 			'updated_at' => current_time( 'mysql' ),
 		), array( 'id' => $id ), array( '%s','%s' ), array( '%d' ) );
+		if ( $existing && $old_status !== $status ) {
+			/** @see class-shipment.php for the same action fired on the Save & Update path. */
+			do_action( 'workparcel_status_changed', $id, $old_status, $status );
+		}
 		wp_safe_redirect( admin_url( 'admin.php?page=workparcel-add&id=' . $id . '&message=event_added' ) );
 		exit;
 	}

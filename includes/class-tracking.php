@@ -22,7 +22,21 @@ class Tracking {
 			),
 			array( '%d','%s','%s','%s','%s','%s' )
 		);
-		return false === $result ? new \WP_Error( 'event_failed', __( 'Could not add tracking event.', 'workparcel' ) ) : (int) $wpdb->insert_id;
+		if ( false === $result ) return new \WP_Error( 'event_failed', __( 'Could not add tracking event.', 'workparcel' ) );
+
+		$event_id = (int) $wpdb->insert_id;
+		/**
+		 * Fires after a tracking event is recorded.
+		 * Useful for sending custom notifications or syncing with other plugins (e.g. WooCommerce).
+		 *
+		 * @param int    $shipment_id Shipment ID.
+		 * @param string $status      Event status key.
+		 * @param string $location    Event location.
+		 * @param string $description Event description.
+		 * @param string $event_date  Event datetime (MySQL format).
+		 */
+		do_action( 'workparcel_tracking_event_added', $shipment_id, $status, $location, $description, $event_date );
+		return $event_id;
 	}
 
 	public static function events( $shipment_id ) {

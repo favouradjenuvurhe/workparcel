@@ -5,7 +5,11 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Shipment {
 	public static function statuses() {
-		return array(
+		/**
+		 * Filter the list of shipment statuses (key => label).
+		 * Lets other plugins (e.g. a WooCommerce bridge, a custom carrier integration) add or relabel statuses.
+		 */
+		return apply_filters( 'workparcel_statuses', array(
 			'pending'          => __( 'Pending', 'workparcel' ),
 			'processing'       => __( 'Processing', 'workparcel' ),
 			'picked_up'        => __( 'Picked Up', 'workparcel' ),
@@ -15,7 +19,7 @@ class Shipment {
 			'delivered'        => __( 'Delivered', 'workparcel' ),
 			'failed_delivery'  => __( 'Failed Delivery', 'workparcel' ),
 			'cancelled'        => __( 'Cancelled', 'workparcel' ),
-		);
+		) );
 	}
 
 	public static function generate_tracking_number() {
@@ -117,7 +121,22 @@ class Shipment {
 			if ( false === $result ) return new \WP_Error( 'save_failed', __( 'Could not update shipment.', 'workparcel' ) );
 			if ( $old && $old->status !== $status ) {
 				Tracking::add_event( $id, $status, '', sprintf( __( 'Shipment status changed to %s.', 'workparcel' ), $statuses[ $status ] ) );
+				/**
+				 * Fires when a shipment's status changes.
+				 *
+				 * @param int    $id         Shipment ID.
+				 * @param string $old_status Previous status key.
+				 * @param string $new_status New status key.
+				 */
+				do_action( 'workparcel_status_changed', $id, $old->status, $status );
 			}
+			/**
+			 * Fires after a shipment is updated.
+			 *
+			 * @param int   $id  Shipment ID.
+			 * @param array $row Saved shipment data.
+			 */
+			do_action( 'workparcel_shipment_updated', $id, $row );
 			return $id;
 		}
 
@@ -128,6 +147,13 @@ class Shipment {
 
 		$new_id = (int) $wpdb->insert_id;
 		Tracking::add_event( $new_id, $status, '', __( 'Shipment created.', 'workparcel' ) );
+		/**
+		 * Fires after a new shipment is created.
+		 *
+		 * @param int   $new_id Shipment ID.
+		 * @param array $row    Saved shipment data.
+		 */
+		do_action( 'workparcel_shipment_created', $new_id, $row );
 		return $new_id;
 	}
 
