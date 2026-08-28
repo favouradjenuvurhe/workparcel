@@ -19,7 +19,7 @@
 			<label class="screen-reader-text" for="wp-workparcel-status-filter"><?php esc_html_e( 'Filter by status', 'workparcel' ); ?></label>
 			<select id="wp-workparcel-status-filter" name="status">
 				<option value=""><?php esc_html_e( 'All statuses', 'workparcel' ); ?></option>
-				<?php foreach ( Shipment::statuses() as $key => $label ) : ?>
+				<?php foreach ( \Workparcel\Shipment::statuses() as $key => $label ) : ?>
 					<option value="<?php echo esc_attr( $key ); ?>" <?php selected( isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '', $key ); ?>><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>
 			</select>
@@ -57,7 +57,7 @@
 						<td data-label="<?php esc_attr_e( 'Origin', 'workparcel' ); ?>"><?php echo esc_html( $item->origin ?: '—' ); ?></td>
 						<td data-label="<?php esc_attr_e( 'Destination', 'workparcel' ); ?>"><?php echo esc_html( $item->destination ?: '—' ); ?></td>
 						<td data-label="<?php esc_attr_e( 'Status', 'workparcel' ); ?>">
-							<span class="wp-workparcel-badge wp-workparcel-badge-<?php echo esc_attr( $item->status ); ?>"><?php echo esc_html( Shipment::statuses()[ $item->status ] ?? $item->status ); ?></span>
+							<span class="wp-workparcel-badge wp-workparcel-badge-<?php echo esc_attr( $item->status ); ?>"><?php echo esc_html( \Workparcel\Shipment::statuses()[ $item->status ] ?? $item->status ); ?></span>
 						</td>
 						<td data-label="<?php esc_attr_e( 'Estimated Delivery', 'workparcel' ); ?>"><?php echo esc_html( $item->estimated_delivery ?: '—' ); ?></td>
 						<td data-label="<?php esc_attr_e( 'Created', 'workparcel' ); ?>"><?php echo esc_html( $item->created_at ); ?></td>

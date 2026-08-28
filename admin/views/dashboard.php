@@ -13,7 +13,7 @@
 		</div>
 		<?php foreach ( array( 'pending', 'in_transit', 'delivered' ) as $key ) : ?>
 			<div class="wp-workparcel-stat wp-workparcel-stat-<?php echo esc_attr( $key ); ?>">
-				<span class="wp-workparcel-stat-label"><?php echo esc_html( Shipment::statuses()[ $key ] ); ?></span>
+				<span class="wp-workparcel-stat-label"><?php echo esc_html( \Workparcel\Shipment::statuses()[ $key ] ); ?></span>
 				<strong class="wp-workparcel-stat-value"><?php echo esc_html( $stats[ $key ] ); ?></strong>
 			</div>
 		<?php endforeach; ?>
@@ -47,7 +47,7 @@
 						</td>
 						<td data-label="<?php esc_attr_e( 'Recipient', 'workparcel' ); ?>"><?php echo esc_html( $item->receiver_name ?: '—' ); ?></td>
 						<td data-label="<?php esc_attr_e( 'Status', 'workparcel' ); ?>">
-							<span class="wp-workparcel-badge wp-workparcel-badge-<?php echo esc_attr( $item->status ); ?>"><?php echo esc_html( Shipment::statuses()[ $item->status ] ?? $item->status ); ?></span>
+							<span class="wp-workparcel-badge wp-workparcel-badge-<?php echo esc_attr( $item->status ); ?>"><?php echo esc_html( \Workparcel\Shipment::statuses()[ $item->status ] ?? $item->status ); ?></span>
 						</td>
 						<td data-label="<?php esc_attr_e( 'Created', 'workparcel' ); ?>"><?php echo esc_html( $item->created_at ); ?></td>
 					</tr>

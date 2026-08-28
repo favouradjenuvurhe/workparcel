@@ -21,12 +21,12 @@
 				<div class="wp-workparcel-panel">
 					<h2><?php esc_html_e( 'Shipment Information', 'workparcel' ); ?></h2>
 					<p><label for="wp-wc-tracking_number"><?php esc_html_e( 'Tracking Number', 'workparcel' ); ?><br>
-						<input id="wp-wc-tracking_number" class="widefat" name="tracking_number" value="<?php echo esc_attr( $shipment->tracking_number ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Leave blank to generate', 'workparcel' ); ?>"></label></p>
+						<input type="text" id="wp-wc-tracking_number" class="widefat" name="tracking_number" value="<?php echo esc_attr( $shipment->tracking_number ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Leave blank to generate', 'workparcel' ); ?>"></label></p>
 					<div class="wp-workparcel-two">
 						<p><label for="wp-wc-reference"><?php esc_html_e( 'Reference', 'workparcel' ); ?><br>
-							<input id="wp-wc-reference" class="widefat" name="reference" value="<?php echo esc_attr( $shipment->reference ?? '' ); ?>"></label></p>
+							<input type="text" id="wp-wc-reference" class="widefat" name="reference" value="<?php echo esc_attr( $shipment->reference ?? '' ); ?>"></label></p>
 						<p><label for="wp-wc-title"><?php esc_html_e( 'Shipment Title', 'workparcel' ); ?><br>
-							<input id="wp-wc-title" class="widefat" name="title" value="<?php echo esc_attr( $shipment->title ?? '' ); ?>"></label></p>
+							<input type="text" id="wp-wc-title" class="widefat" name="title" value="<?php echo esc_attr( $shipment->title ?? '' ); ?>"></label></p>
 					</div>
 					<p><label for="wp-wc-description"><?php esc_html_e( 'Description', 'workparcel' ); ?><br>
 						<textarea id="wp-wc-description" class="widefat" name="description" rows="4"><?php echo esc_textarea( $shipment->description ?? '' ); ?></textarea></label></p>
@@ -36,9 +36,9 @@
 					<h2><?php esc_html_e( 'Sender', 'workparcel' ); ?></h2>
 					<div class="wp-workparcel-two">
 						<p><label for="wp-wc-sender_name"><?php esc_html_e( 'Name', 'workparcel' ); ?><br>
-							<input id="wp-wc-sender_name" class="widefat" name="sender_name" value="<?php echo esc_attr( $shipment->sender_name ?? '' ); ?>"></label></p>
+							<input type="text" id="wp-wc-sender_name" class="widefat" name="sender_name" value="<?php echo esc_attr( $shipment->sender_name ?? '' ); ?>"></label></p>
 						<p><label for="wp-wc-sender_phone"><?php esc_html_e( 'Phone', 'workparcel' ); ?><br>
-							<input id="wp-wc-sender_phone" class="widefat" name="sender_phone" value="<?php echo esc_attr( $shipment->sender_phone ?? '' ); ?>"></label></p>
+							<input type="text" id="wp-wc-sender_phone" class="widefat" name="sender_phone" value="<?php echo esc_attr( $shipment->sender_phone ?? '' ); ?>"></label></p>
 					</div>
 					<p><label for="wp-wc-sender_email"><?php esc_html_e( 'Email', 'workparcel' ); ?><br>
 						<input id="wp-wc-sender_email" type="email" class="widefat" name="sender_email" value="<?php echo esc_attr( $shipment->sender_email ?? '' ); ?>"></label></p>
@@ -50,9 +50,9 @@
 					<h2><?php esc_html_e( 'Recipient', 'workparcel' ); ?></h2>
 					<div class="wp-workparcel-two">
 						<p><label for="wp-wc-receiver_name"><?php esc_html_e( 'Name', 'workparcel' ); ?><br>
-							<input id="wp-wc-receiver_name" class="widefat" name="receiver_name" value="<?php echo esc_attr( $shipment->receiver_name ?? '' ); ?>"></label></p>
+							<input type="text" id="wp-wc-receiver_name" class="widefat" name="receiver_name" value="<?php echo esc_attr( $shipment->receiver_name ?? '' ); ?>"></label></p>
 						<p><label for="wp-wc-receiver_phone"><?php esc_html_e( 'Phone', 'workparcel' ); ?><br>
-							<input id="wp-wc-receiver_phone" class="widefat" name="receiver_phone" value="<?php echo esc_attr( $shipment->receiver_phone ?? '' ); ?>"></label></p>
+							<input type="text" id="wp-wc-receiver_phone" class="widefat" name="receiver_phone" value="<?php echo esc_attr( $shipment->receiver_phone ?? '' ); ?>"></label></p>
 					</div>
 					<p><label for="wp-wc-receiver_email"><?php esc_html_e( 'Email', 'workparcel' ); ?><br>
 						<input id="wp-wc-receiver_email" type="email" class="widefat" name="receiver_email" value="<?php echo esc_attr( $shipment->receiver_email ?? '' ); ?>"></label></p>
@@ -69,7 +69,7 @@
 								<div class="wp-workparcel-event">
 									<div class="wp-workparcel-dot" aria-hidden="true"></div>
 									<div class="wp-workparcel-event-body">
-										<strong><?php echo esc_html( Shipment::statuses()[ $event->status ] ?? $event->status ); ?></strong>
+										<strong><?php echo esc_html( \Workparcel\Shipment::statuses()[ $event->status ] ?? $event->status ); ?></strong>
 										<?php if ( $event->location ) : ?><span class="wp-workparcel-location"><?php echo esc_html( $event->location ); ?></span><?php endif; ?>
 										<?php if ( $event->description ) : ?><p><?php echo esc_html( $event->description ); ?></p><?php endif; ?>
 										<small><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $event->event_date ) ) ); ?></small>
@@ -88,11 +88,11 @@
 				<div class="wp-workparcel-panel">
 					<h2><?php esc_html_e( 'Shipping', 'workparcel' ); ?></h2>
 					<p><label for="wp-wc-origin"><?php esc_html_e( 'Origin', 'workparcel' ); ?><br>
-						<input id="wp-wc-origin" class="widefat" name="origin" value="<?php echo esc_attr( $shipment->origin ?? '' ); ?>"></label></p>
+						<input type="text" id="wp-wc-origin" class="widefat" name="origin" value="<?php echo esc_attr( $shipment->origin ?? '' ); ?>"></label></p>
 					<p><label for="wp-wc-destination"><?php esc_html_e( 'Destination', 'workparcel' ); ?><br>
-						<input id="wp-wc-destination" class="widefat" name="destination" value="<?php echo esc_attr( $shipment->destination ?? '' ); ?>"></label></p>
+						<input type="text" id="wp-wc-destination" class="widefat" name="destination" value="<?php echo esc_attr( $shipment->destination ?? '' ); ?>"></label></p>
 					<p><label for="wp-wc-parcel_type"><?php esc_html_e( 'Parcel Type', 'workparcel' ); ?><br>
-						<input id="wp-wc-parcel_type" class="widefat" name="parcel_type" value="<?php echo esc_attr( $shipment->parcel_type ?? '' ); ?>"></label></p>
+						<input type="text" id="wp-wc-parcel_type" class="widefat" name="parcel_type" value="<?php echo esc_attr( $shipment->parcel_type ?? '' ); ?>"></label></p>
 					<div class="wp-workparcel-two">
 						<p><label for="wp-wc-weight"><?php esc_html_e( 'Weight', 'workparcel' ); ?><br>
 							<input id="wp-wc-weight" type="number" step="0.01" min="0" class="widefat" name="weight" value="<?php echo esc_attr( $shipment->weight ?? '0' ); ?>"></label></p>
@@ -109,7 +109,7 @@
 					<h2><?php esc_html_e( 'Status', 'workparcel' ); ?></h2>
 					<p><label for="wp-wc-status" class="screen-reader-text"><?php esc_html_e( 'Current status', 'workparcel' ); ?></label>
 						<select id="wp-wc-status" class="widefat" name="status">
-							<?php foreach ( Shipment::statuses() as $key => $label ) : ?>
+							<?php foreach ( \Workparcel\Shipment::statuses() as $key => $label ) : ?>
 								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $shipment->status ?? 'pending', $key ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
@@ -134,12 +134,12 @@
 			<div class="wp-workparcel-two">
 				<p><label for="wp-wc-event_status"><?php esc_html_e( 'Status', 'workparcel' ); ?><br>
 					<select id="wp-wc-event_status" class="widefat" name="status">
-						<?php foreach ( Shipment::statuses() as $key => $label ) : ?>
+						<?php foreach ( \Workparcel\Shipment::statuses() as $key => $label ) : ?>
 							<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $shipment->status, $key ); ?>><?php echo esc_html( $label ); ?></option>
 						<?php endforeach; ?>
 					</select></label></p>
 				<p><label for="wp-wc-event_location"><?php esc_html_e( 'Location', 'workparcel' ); ?><br>
-					<input id="wp-wc-event_location" class="widefat" name="location"></label></p>
+					<input type="text" id="wp-wc-event_location" class="widefat" name="location"></label></p>
 			</div>
 			<p><label for="wp-wc-event_description"><?php esc_html_e( 'Description', 'workparcel' ); ?><br>
 				<textarea id="wp-wc-event_description" class="widefat" name="description" rows="3"></textarea></label></p>
