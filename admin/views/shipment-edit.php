@@ -160,8 +160,17 @@
 					<?php if ( $shipment ) : ?>
 						<p class="wp-workparcel-muted-text"><?php esc_html_e( 'Changing this dropdown updates the status without logging a tracking event. Use “Add Tracking Event” below to record location and history.', 'workparcel' ); ?></p>
 					<?php endif; ?>
-					<p><label for="wp-wc-driver_name"><?php esc_html_e( 'Assigned To (driver / customer)', 'workparcel' ); ?><br>
-						<input type="text" id="wp-wc-driver_name" class="widefat" name="driver_name" value="<?php echo esc_attr( $shipment->driver_name ?? '' ); ?>" placeholder="<?php esc_attr_e( 'e.g. John (Driver) or the customer picking up', 'workparcel' ); ?>"></label></p>
+					<p><label for="wp-wc-customer_id"><?php esc_html_e( 'Assigned To (driver / customer)', 'workparcel' ); ?><br>
+						<select id="wp-wc-customer_id" class="widefat" name="customer_id">
+							<option value="0"><?php esc_html_e( '— Not assigned —', 'workparcel' ); ?></option>
+							<?php foreach ( $customers as $c ) : ?>
+								<option value="<?php echo esc_attr( $c->id ); ?>" <?php selected( $shipment->customer_id ?? 0, $c->id ); ?>><?php echo esc_html( $c->name . ' (' . ( \Workparcel\Customer::types()[ $c->type ] ?? $c->type ) . ') — ' . $c->scan_id ); ?></option>
+							<?php endforeach; ?>
+						</select></label>
+						<?php if ( empty( $customers ) ) : ?>
+							<span class="description"><?php echo wp_kses_post( sprintf( __( 'No customers registered yet. <a href="%s">Add one</a>.', 'workparcel' ), esc_url( admin_url( 'admin.php?page=workparcel-customer-edit' ) ) ) ); ?></span>
+						<?php endif; ?>
+					</p>
 				</div>
 
 				<?php submit_button( $shipment ? __( 'Update Shipment', 'workparcel' ) : __( 'Create Shipment', 'workparcel' ), 'primary', 'submit', true ); ?>
