@@ -1,4 +1,4 @@
-/* Workparcel Admin UI — v1.0.8 */
+/* Workparcel Admin UI — v1.1.0 */
 
 .wp-workparcel-wrap,
 .wp-workparcel-wrap * {
@@ -202,6 +202,19 @@
 	background: #fff;
 }
 
+.wp-workparcel-scanid-display {
+	display: inline-block;
+	background: #eff6ff;
+	color: #1e40af;
+	border: 1px solid #bfdbfe;
+	border-radius: 6px;
+	padding: 6px 12px;
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	margin-right: 10px;
+}
+
 .wp-workparcel-media-field {
 	display: flex;
 	align-items: center;
@@ -216,110 +229,6 @@
 	border-radius: 6px;
 	padding: 4px;
 	background: #fff;
-}
-
-/* ---------- Barcode scan tool ---------- */
-.wp-workparcel-scan-panel {
-	max-width: 720px;
-}
-
-.wp-workparcel-scan-modes {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 12px;
-	margin: 16px 0 24px;
-}
-
-.wp-workparcel-scan-mode {
-	display: block;
-	border: 1px solid #dcdcde;
-	border-radius: 8px;
-	padding: 12px 14px;
-	cursor: pointer;
-	font-weight: normal;
-}
-
-.wp-workparcel-scan-mode input {
-	margin-right: 6px;
-}
-
-.wp-workparcel-scan-mode:has(input:checked) {
-	border-color: var(--wp-workparcel-accent, #2563eb);
-	background: #eff6ff;
-}
-
-.wp-workparcel-scan-label {
-	display: block;
-	font-weight: 600;
-	margin-bottom: 8px;
-}
-
-.wp-workparcel-scan-input {
-	width: 100%;
-	font-size: 22px;
-	padding: 16px;
-	border: 2px solid var(--wp-workparcel-accent, #2563eb);
-	border-radius: 8px;
-	box-sizing: border-box;
-	text-align: center;
-	letter-spacing: 0.04em;
-}
-
-.wp-workparcel-scan-result {
-	margin-top: 20px;
-	min-height: 20px;
-}
-
-.wp-workparcel-scan-result.is-success p {
-	color: #166534;
-}
-
-.wp-workparcel-scan-result.is-error p {
-	color: #991b1b;
-}
-
-.wp-workparcel-scan-lookup {
-	background: #f8fafc;
-	border-radius: 8px;
-	padding: 14px 16px;
-}
-
-.wp-workparcel-scan-lookup label {
-	display: inline-block;
-	font-size: 13px;
-	color: #475569;
-	margin: 8px 12px 8px 0;
-}
-
-.wp-workparcel-scan-lookup select,
-.wp-workparcel-scan-lookup input[type="text"] {
-	display: block;
-	margin-top: 4px;
-	padding: 6px 8px;
-	border: 1px solid #949494;
-	border-radius: 6px;
-}
-
-.wp-workparcel-scan-log {
-	list-style: none;
-	margin: 8px 0 0;
-	padding: 0;
-	max-height: 220px;
-	overflow-y: auto;
-}
-
-.wp-workparcel-scan-log li {
-	padding: 8px 10px;
-	border-bottom: 1px solid #f0f0f1;
-	font-size: 13px;
-}
-
-.wp-workparcel-scan-log li.is-error {
-	color: #991b1b;
-}
-
-.wp-workparcel-scan-log li.is-success {
-	color: #166534;
 }
 
 /* ---------- Filters ---------- */
@@ -488,6 +397,7 @@
 #wp-wc-tab-tracking:checked ~ .wp-workparcel-tabs label[for="wp-wc-tab-tracking"],
 #wp-wc-tab-appearance:checked ~ .wp-workparcel-tabs label[for="wp-wc-tab-appearance"],
 #wp-wc-tab-notifications:checked ~ .wp-workparcel-tabs label[for="wp-wc-tab-notifications"],
+#wp-wc-tab-scanapi:checked ~ .wp-workparcel-tabs label[for="wp-wc-tab-scanapi"],
 #wp-wc-tab-advanced:checked ~ .wp-workparcel-tabs label[for="wp-wc-tab-advanced"] {
 	background: #fff;
 	border-color: #dcdcde;
@@ -501,6 +411,7 @@
 #wp-wc-tab-tracking:checked ~ #wp-workparcel-panel-tracking,
 #wp-wc-tab-appearance:checked ~ #wp-workparcel-panel-appearance,
 #wp-wc-tab-notifications:checked ~ #wp-workparcel-panel-notifications,
+#wp-wc-tab-scanapi:checked ~ #wp-workparcel-panel-scanapi,
 #wp-wc-tab-advanced:checked ~ #wp-workparcel-panel-advanced {
 	display: block;
 }
