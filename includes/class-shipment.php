@@ -89,6 +89,14 @@ class Shipment {
 		$statuses = self::statuses();
 		$status = isset( $statuses[ $data['status'] ] ) ? $data['status'] : 'pending';
 
+		$customer_id = absint( $data['customer_id'] ?? 0 );
+		$driver_name = sanitize_text_field( $data['driver_name'] ?? '' );
+		if ( $customer_id ) {
+			$customer = Customer::get( $customer_id );
+			$driver_name = $customer ? $customer->name : '';
+			if ( ! $customer ) $customer_id = 0;
+		}
+
 		$row = array(
 			'tracking_number' => $data['tracking_number'] ?: self::generate_tracking_number(),
 			'reference' => sanitize_text_field( $data['reference'] ?? '' ),
@@ -111,14 +119,15 @@ class Shipment {
 			'status' => $status,
 			'estimated_delivery' => ! empty( $data['estimated_delivery'] ) ? sanitize_text_field( $data['estimated_delivery'] ) : null,
 			'container_no' => sanitize_text_field( $data['container_no'] ?? '' ),
-			'driver_name' => sanitize_text_field( $data['driver_name'] ?? '' ),
+			'driver_name' => $driver_name,
+			'customer_id' => $customer_id,
 			'photo' => ! empty( $data['photo'] ) ? esc_url_raw( $data['photo'] ) : '',
 			'pod_signature' => ! empty( $data['pod_signature'] ) ? esc_url_raw( $data['pod_signature'] ) : '',
 			'pod_photo' => ! empty( $data['pod_photo'] ) ? esc_url_raw( $data['pod_photo'] ) : '',
 			'updated_at' => current_time( 'mysql' ),
 		);
 
-		$formats = array( '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%d','%f','%s','%s','%s','%s','%s','%s','%s' );
+		$formats = array( '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%d','%f','%s','%s','%s','%s','%d','%s','%s','%s' );
 
 		if ( $id ) {
 			$old = self::get( $id );
@@ -197,29 +206,33 @@ class Shipment {
 		return $id;
 	}
 
-	/** Assigns a shipment to a driver or customer for delivery/pickup, logging it in the tracking history. */
-	public static function assign_driver( $id, $driver_name ) {
+	/** Assigns a shipment to a registered driver/customer (by Customer record ID) for delivery/pickup. */
+	public static function assign_driver( $id, $customer_id ) {
 		global $wpdb;
 		$id = absint( $id );
-		$driver_name = sanitize_text_field( $driver_name );
+		$customer_id = absint( $customer_id );
 
 		$existing = self::get( $id );
 		if ( ! $existing ) return new \WP_Error( 'not_found', __( 'Shipment not found.', 'workparcel' ) );
 
-		$wpdb->update( $wpdb->prefix . 'workparcel_shipments', array(
-			'driver_name' => $driver_name,
-			'updated_at' => current_time( 'mysql' ),
-		), array( 'id' => $id ), array( '%s','%s' ), array( '%d' ) );
+		$customer = Customer::get( $customer_id );
+		if ( ! $customer ) return new \WP_Error( 'customer_not_found', __( 'That driver/customer is not registered. Register them under Workparcel → Customers first.', 'workparcel' ) );
 
-		Tracking::add_event( $id, $existing->status, '', sprintf( __( 'Assigned to %s.', 'workparcel' ), $driver_name ) );
+		$wpdb->update( $wpdb->prefix . 'workparcel_shipments', array(
+			'driver_name' => $customer->name,
+			'customer_id' => $customer_id,
+			'updated_at' => current_time( 'mysql' ),
+		), array( 'id' => $id ), array( '%s','%d','%s' ), array( '%d' ) );
+
+		Tracking::add_event( $id, $existing->status, '', sprintf( __( 'Assigned to %s.', 'workparcel' ), $customer->name ) );
 
 		/**
-		 * Fires after a shipment is assigned to a driver or customer.
+		 * Fires after a shipment is assigned to a registered driver/customer.
 		 *
-		 * @param int    $id          Shipment ID.
-		 * @param string $driver_name Name of the driver/customer it was assigned to.
+		 * @param int $id          Shipment ID.
+		 * @param int $customer_id ID of the Customer record it was assigned to.
 		 */
-		do_action( 'workparcel_shipment_assigned', $id, $driver_name );
+		do_action( 'workparcel_shipment_assigned', $id, $customer_id );
 		return $id;
 	}
 }

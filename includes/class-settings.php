@@ -21,6 +21,8 @@ class Settings {
 			'notify_sender' => 1,
 			'notify_receiver' => 1,
 			'notify_admin' => 1,
+			'enable_scan_page' => 0,
+			'enable_rest_api' => 1,
 			'delete_data' => 0,
 		) );
 	}
@@ -48,6 +50,8 @@ class Settings {
 			'notify_sender' => empty( $input['notify_sender'] ) ? 0 : 1,
 			'notify_receiver' => empty( $input['notify_receiver'] ) ? 0 : 1,
 			'notify_admin' => empty( $input['notify_admin'] ) ? 0 : 1,
+			'enable_scan_page' => empty( $input['enable_scan_page'] ) ? 0 : 1,
+			'enable_rest_api' => empty( $input['enable_rest_api'] ) ? 0 : 1,
 			'delete_data' => empty( $input['delete_data'] ) ? 0 : 1,
 		);
 	}
@@ -70,6 +74,7 @@ class Settings {
 					<input type="radio" name="wp_wc_tab" id="wp-wc-tab-tracking" class="wp-workparcel-tab-radio">
 					<input type="radio" name="wp_wc_tab" id="wp-wc-tab-appearance" class="wp-workparcel-tab-radio">
 					<input type="radio" name="wp_wc_tab" id="wp-wc-tab-notifications" class="wp-workparcel-tab-radio">
+					<input type="radio" name="wp_wc_tab" id="wp-wc-tab-scanapi" class="wp-workparcel-tab-radio">
 					<input type="radio" name="wp_wc_tab" id="wp-wc-tab-advanced" class="wp-workparcel-tab-radio">
 
 					<div class="wp-workparcel-tabs" role="tablist">
@@ -77,6 +82,7 @@ class Settings {
 						<label for="wp-wc-tab-tracking" class="wp-workparcel-tab"><?php esc_html_e( 'Tracking', 'workparcel' ); ?></label>
 						<label for="wp-wc-tab-appearance" class="wp-workparcel-tab"><?php esc_html_e( 'Appearance', 'workparcel' ); ?></label>
 						<label for="wp-wc-tab-notifications" class="wp-workparcel-tab"><?php esc_html_e( 'Notifications', 'workparcel' ); ?></label>
+						<label for="wp-wc-tab-scanapi" class="wp-workparcel-tab"><?php esc_html_e( 'Scan & API', 'workparcel' ); ?></label>
 						<label for="wp-wc-tab-advanced" class="wp-workparcel-tab"><?php esc_html_e( 'Advanced', 'workparcel' ); ?></label>
 					</div>
 
@@ -175,6 +181,40 @@ class Settings {
 							<tr>
 								<th><?php esc_html_e( 'Notify admin', 'workparcel' ); ?></th>
 								<td><label><input type="checkbox" name="workparcel_settings[notify_admin]" value="1" <?php checked( $s['notify_admin'], 1 ); ?>> <?php esc_html_e( 'Email the site admin when a shipment is created or its status changes.', 'workparcel' ); ?></label></td>
+							</tr>
+						</table>
+					</div>
+
+					<div class="wp-workparcel-panel wp-workparcel-tab-panel" id="wp-workparcel-panel-scanapi">
+						<h2><?php esc_html_e( 'Barcode Scan Page', 'workparcel' ); ?></h2>
+						<table class="form-table" role="presentation">
+							<tr>
+								<th><?php esc_html_e( 'Enable Scan page', 'workparcel' ); ?></th>
+								<td>
+									<label><input type="checkbox" name="workparcel_settings[enable_scan_page]" value="1" <?php checked( $s['enable_scan_page'], 1 ); ?>> <?php esc_html_e( 'Turn on the [workparcel_scan] shortcode.', 'workparcel' ); ?></label>
+									<p class="description">
+										<?php esc_html_e( 'Off by default. When on, add the shortcode below to any WordPress page — no admin login required. A logged-in staff member with shipment permissions can use it directly; anyone else must sign in with a registered Scan ID (see Workparcel → Customers).', 'workparcel' ); ?>
+									</p>
+									<p><code>[workparcel_scan]</code></p>
+								</td>
+							</tr>
+						</table>
+
+						<h2><?php esc_html_e( 'REST API', 'workparcel' ); ?></h2>
+						<table class="form-table" role="presentation">
+							<tr>
+								<th><?php esc_html_e( 'Enable REST API', 'workparcel' ); ?></th>
+								<td>
+									<label><input type="checkbox" name="workparcel_settings[enable_rest_api]" value="1" <?php checked( $s['enable_rest_api'], 1 ); ?>> <?php esc_html_e( 'Expose the Workparcel REST API.', 'workparcel' ); ?></label>
+									<p class="description">
+										<?php echo wp_kses_post( sprintf(
+											/* translators: %s: REST API base URL */
+											__( 'Base URL: <code>%s</code>. Every endpoint still requires a WordPress user with the matching Workparcel capability — authenticate with an <a href="%s" target="_blank" rel="noopener">Application Password</a> on your user profile, or a logged-in session for same-site requests. The read-only tracking lookup endpoint has no authentication, matching the public tracking page.', 'workparcel' ),
+											esc_url( rest_url( 'workparcel/v1' ) ),
+											esc_url( admin_url( 'profile.php#application-passwords-section' ) )
+										) ); ?>
+									</p>
+								</td>
 							</tr>
 						</table>
 					</div>

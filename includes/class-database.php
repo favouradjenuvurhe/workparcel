@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Database {
 
 	/** Bump ONLY when the table schema itself changes, independent of the plugin version. */
-	const DB_VERSION = '1.0.8';
+	const DB_VERSION = '1.1.0';
 
 	public static function activate() {
 		self::install_tables();
@@ -28,11 +28,13 @@ class Database {
 	/**
 	 * Runs on every admin load and re-applies dbDelta if the stored schema version is behind.
 	 * dbDelta only ever adds/modifies columns to match the SQL — it never drops data — so this
-	 * is safe to run repeatedly and is how existing installs pick up new columns after an update.
+	 * is safe to run repeatedly and is how existing installs pick up new columns/capabilities
+	 * after an update, without needing to deactivate/reactivate the plugin.
 	 */
 	public static function maybe_upgrade() {
 		if ( get_option( 'workparcel_db_version' ) === self::DB_VERSION ) return;
 		self::install_tables();
+		Capabilities::add();
 		update_option( 'workparcel_db_version', self::DB_VERSION );
 	}
 
@@ -43,6 +45,7 @@ class Database {
 		$charset = $wpdb->get_charset_collate();
 		$shipments = $wpdb->prefix . 'workparcel_shipments';
 		$events = $wpdb->prefix . 'workparcel_tracking_events';
+		$customers = $wpdb->prefix . 'workparcel_customers';
 
 		$sql1 = "CREATE TABLE $shipments (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -68,6 +71,7 @@ class Database {
 			estimated_delivery date NULL,
 			container_no varchar(190) NOT NULL DEFAULT '',
 			driver_name varchar(190) NOT NULL DEFAULT '',
+			customer_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			photo varchar(500) NOT NULL DEFAULT '',
 			pod_signature varchar(500) NOT NULL DEFAULT '',
 			pod_photo varchar(500) NOT NULL DEFAULT '',
@@ -76,7 +80,8 @@ class Database {
 			PRIMARY KEY (id),
 			UNIQUE KEY tracking_number (tracking_number),
 			KEY status (status),
-			KEY created_at (created_at)
+			KEY created_at (created_at),
+			KEY customer_id (customer_id)
 		) $charset;";
 
 		$sql2 = "CREATE TABLE $events (
@@ -92,8 +97,25 @@ class Database {
 			KEY event_date (event_date)
 		) $charset;";
 
+		$sql3 = "CREATE TABLE $customers (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			scan_id varchar(11) NOT NULL,
+			name varchar(190) NOT NULL DEFAULT '',
+			type varchar(20) NOT NULL DEFAULT 'customer',
+			email varchar(190) NOT NULL DEFAULT '',
+			phone varchar(50) NOT NULL DEFAULT '',
+			notes text NOT NULL,
+			status varchar(20) NOT NULL DEFAULT 'active',
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY scan_id (scan_id),
+			KEY type (type)
+		) $charset;";
+
 		dbDelta( $sql1 );
 		dbDelta( $sql2 );
+		dbDelta( $sql3 );
 	}
 
 	public static function deactivate() {}
@@ -104,6 +126,7 @@ class Database {
 			global $wpdb;
 			$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}workparcel_tracking_events" );
 			$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}workparcel_shipments" );
+			$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}workparcel_customers" );
 			delete_option( 'workparcel_settings' );
 			delete_option( 'workparcel_db_version' );
 		}
