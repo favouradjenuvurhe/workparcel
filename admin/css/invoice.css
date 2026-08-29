@@ -1,0 +1,253 @@
+/* Workparcel Invoice — v1.0.8 */
+
+.wp-workparcel-invoice-actions {
+	margin: 16px 0;
+	display: flex;
+	gap: 8px;
+}
+
+.wp-workparcel-invoice {
+	max-width: 900px;
+	margin: 0 auto 40px;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 36px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+	box-sizing: border-box;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+	color: #1e293b;
+}
+
+.wp-workparcel-invoice * {
+	box-sizing: border-box;
+}
+
+.wp-workparcel-invoice-header {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 24px;
+	padding-bottom: 24px;
+	margin-bottom: 24px;
+	border-bottom: 2px solid var(--wp-workparcel-accent, #2563eb);
+}
+
+.wp-workparcel-invoice-eyebrow {
+	display: block;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #64748b;
+	margin-bottom: 4px;
+}
+
+.wp-workparcel-invoice-header h1 {
+	margin: 0 0 14px;
+	font-size: 26px;
+	letter-spacing: 0.02em;
+}
+
+.wp-workparcel-invoice-barcode {
+	line-height: 0;
+}
+
+.wp-workparcel-invoice-brand {
+	text-align: right;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 10px;
+}
+
+.wp-workparcel-invoice-brand img {
+	max-height: 44px;
+	max-width: 220px;
+}
+
+.wp-workparcel-invoice-brand strong {
+	font-size: 18px;
+}
+
+.wp-workparcel-invoice-grid-2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
+	margin-bottom: 20px;
+}
+
+.wp-workparcel-invoice-card {
+	background: #f8fafc;
+	border-radius: 10px;
+	padding: 20px 22px;
+	margin-bottom: 20px;
+}
+
+.wp-workparcel-invoice-card h2 {
+	margin: 0 0 12px;
+	font-size: 16px;
+	color: var(--wp-workparcel-accent, #2563eb);
+}
+
+.wp-workparcel-invoice-card h3 {
+	font-size: 13px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #64748b;
+	margin: 16px 0 6px;
+}
+
+.wp-workparcel-invoice-card p {
+	margin: 0 0 4px;
+	font-size: 14px;
+}
+
+.wp-workparcel-invoice-details-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 14px;
+}
+
+.wp-workparcel-invoice-details-grid span {
+	display: block;
+	font-size: 12px;
+	color: #64748b;
+	margin-bottom: 2px;
+}
+
+.wp-workparcel-invoice-details-grid strong {
+	font-size: 14px;
+	word-break: break-word;
+}
+
+.wp-workparcel-invoice-label {
+	display: block;
+	font-size: 12px;
+	color: #64748b;
+	margin-bottom: 6px;
+}
+
+.wp-workparcel-invoice-signature {
+	max-height: 100px;
+	max-width: 100%;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	padding: 8px;
+}
+
+.wp-workparcel-invoice-photo {
+	max-height: 180px;
+	max-width: 100%;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+}
+
+.wp-workparcel-invoice-fee-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border-top: 1px solid #e2e8f0;
+	margin-top: 18px;
+	padding-top: 14px;
+	font-size: 14px;
+}
+
+.wp-workparcel-invoice-fee-row strong {
+	font-size: 18px;
+}
+
+.wp-workparcel-invoice-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.wp-workparcel-invoice-table th {
+	text-align: left;
+	background: var(--wp-workparcel-accent, #2563eb);
+	color: #fff;
+	padding: 9px 10px;
+	font-weight: 600;
+}
+
+.wp-workparcel-invoice-table th:first-child { border-radius: 6px 0 0 6px; }
+.wp-workparcel-invoice-table th:last-child { border-radius: 0 6px 6px 0; }
+
+.wp-workparcel-invoice-table td {
+	padding: 9px 10px;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.wp-workparcel-invoice-table tr:nth-child(even) td {
+	background: #f8fafc;
+}
+
+.wp-workparcel-invoice-footer {
+	text-align: center;
+	font-size: 12px;
+	color: #94a3b8;
+	margin-top: 24px;
+}
+
+/* Status badge — duplicated here (not shared with admin.css) so the invoice page stays self-contained for printing. */
+.wp-workparcel-status {
+	display: inline-block;
+	padding: 5px 12px;
+	border-radius: 999px;
+	font-weight: 600;
+	font-size: 12px;
+	background: #eff6ff;
+	color: #1e40af;
+	white-space: nowrap;
+}
+
+.wp-workparcel-status-pending { background: #fef3c7; color: #92400e; }
+.wp-workparcel-status-processing,
+.wp-workparcel-status-picked_up { background: #e0e7ff; color: #3730a3; }
+.wp-workparcel-status-in_transit,
+.wp-workparcel-status-at_facility { background: #dbeafe; color: #1e40af; }
+.wp-workparcel-status-out_for_delivery { background: #cffafe; color: #155e75; }
+.wp-workparcel-status-delivered { background: #dcfce7; color: #166534; }
+.wp-workparcel-status-failed_delivery { background: #fee2e2; color: #991b1b; }
+.wp-workparcel-status-cancelled { background: #f1f5f9; color: #475569; }
+
+@media (max-width: 700px) {
+	.wp-workparcel-invoice-grid-2 {
+		grid-template-columns: 1fr;
+	}
+
+	.wp-workparcel-invoice-brand {
+		align-items: flex-start;
+		text-align: left;
+	}
+}
+
+@media print {
+	#adminmenumain,
+	#wpadminbar,
+	#wpfooter,
+	.wp-workparcel-brand-header,
+	.wp-workparcel-invoice-actions,
+	.notice {
+		display: none !important;
+	}
+
+	#wpcontent,
+	#wpbody-content {
+		margin-left: 0 !important;
+		padding-left: 0 !important;
+	}
+
+	html.wp-toolbar {
+		padding-top: 0 !important;
+	}
+
+	.wp-workparcel-invoice {
+		box-shadow: none;
+		border: none;
+		padding: 0;
+	}
+}
