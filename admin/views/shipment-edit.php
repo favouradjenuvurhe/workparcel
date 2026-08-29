@@ -2,6 +2,7 @@
 <div class="wrap wp-workparcel-wrap">
 	<?php
 	$wp_page_title = $shipment ? __( 'Edit Shipment', 'workparcel' ) : __( 'Add Shipment', 'workparcel' );
+	$wp_page_actions = $shipment ? '<a class="button" target="_blank" href="' . esc_url( admin_url( 'admin.php?page=workparcel-invoice&id=' . $shipment->id ) ) . '">' . esc_html__( 'View Invoice', 'workparcel' ) . '</a>' : '';
 	include WORKPARCEL_DIR . 'admin/views/partials/header.php';
 	?>
 
@@ -60,6 +61,46 @@
 						<textarea id="wp-wc-receiver_address" class="widefat" name="receiver_address" rows="3"><?php echo esc_textarea( $shipment->receiver_address ?? '' ); ?></textarea></label></p>
 				</div>
 
+				<div class="wp-workparcel-panel">
+					<h2><?php esc_html_e( 'Photos & Proof of Delivery', 'workparcel' ); ?></h2>
+					<p class="description"><?php esc_html_e( 'All optional. These appear on the invoice and in shipment emails when set.', 'workparcel' ); ?></p>
+					<div class="wp-workparcel-two">
+						<p>
+							<label><?php esc_html_e( 'Shipment / Package Photo', 'workparcel' ); ?></label><br>
+							<?php
+							$mf_name = 'photo';
+							$mf_id = 'wp-wc-photo';
+							$mf_value = $shipment->photo ?? '';
+							$mf_title = __( 'Select shipment photo', 'workparcel' );
+							$mf_button = __( 'Use this photo', 'workparcel' );
+							include WORKPARCEL_DIR . 'admin/views/partials/media-field.php';
+							?>
+						</p>
+						<p>
+							<label><?php esc_html_e( 'Proof of Delivery Signature', 'workparcel' ); ?></label><br>
+							<?php
+							$mf_name = 'pod_signature';
+							$mf_id = 'wp-wc-pod-signature';
+							$mf_value = $shipment->pod_signature ?? '';
+							$mf_title = __( 'Select signature image', 'workparcel' );
+							$mf_button = __( 'Use this signature', 'workparcel' );
+							include WORKPARCEL_DIR . 'admin/views/partials/media-field.php';
+							?>
+						</p>
+					</div>
+					<p>
+						<label><?php esc_html_e( 'Proof of Delivery Photo', 'workparcel' ); ?></label><br>
+						<?php
+						$mf_name = 'pod_photo';
+						$mf_id = 'wp-wc-pod-photo';
+						$mf_value = $shipment->pod_photo ?? '';
+						$mf_title = __( 'Select proof-of-delivery photo', 'workparcel' );
+						$mf_button = __( 'Use this photo', 'workparcel' );
+						include WORKPARCEL_DIR . 'admin/views/partials/media-field.php';
+						?>
+					</p>
+				</div>
+
 				<?php if ( $shipment ) : ?>
 				<div class="wp-workparcel-panel">
 					<h2><?php esc_html_e( 'Tracking Timeline', 'workparcel' ); ?></h2>
@@ -103,6 +144,8 @@
 						<input id="wp-wc-shipping_fee" type="number" step="0.01" min="0" class="widefat" name="shipping_fee" value="<?php echo esc_attr( $shipment->shipping_fee ?? '0' ); ?>"></label></p>
 					<p><label for="wp-wc-estimated_delivery"><?php esc_html_e( 'Estimated Delivery', 'workparcel' ); ?><br>
 						<input id="wp-wc-estimated_delivery" type="date" class="widefat" name="estimated_delivery" value="<?php echo esc_attr( $shipment->estimated_delivery ?? '' ); ?>"></label></p>
+					<p><label for="wp-wc-container_no"><?php esc_html_e( 'Container No.', 'workparcel' ); ?><br>
+						<input type="text" id="wp-wc-container_no" class="widefat" name="container_no" value="<?php echo esc_attr( $shipment->container_no ?? '' ); ?>"></label></p>
 				</div>
 
 				<div class="wp-workparcel-panel">
@@ -117,6 +160,8 @@
 					<?php if ( $shipment ) : ?>
 						<p class="wp-workparcel-muted-text"><?php esc_html_e( 'Changing this dropdown updates the status without logging a tracking event. Use “Add Tracking Event” below to record location and history.', 'workparcel' ); ?></p>
 					<?php endif; ?>
+					<p><label for="wp-wc-driver_name"><?php esc_html_e( 'Assigned To (driver / customer)', 'workparcel' ); ?><br>
+						<input type="text" id="wp-wc-driver_name" class="widefat" name="driver_name" value="<?php echo esc_attr( $shipment->driver_name ?? '' ); ?>" placeholder="<?php esc_attr_e( 'e.g. John (Driver) or the customer picking up', 'workparcel' ); ?>"></label></p>
 				</div>
 
 				<?php submit_button( $shipment ? __( 'Update Shipment', 'workparcel' ) : __( 'Create Shipment', 'workparcel' ), 'primary', 'submit', true ); ?>
