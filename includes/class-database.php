@@ -4,7 +4,39 @@ namespace Workparcel;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Database {
+
+	/** Bump ONLY when the table schema itself changes, independent of the plugin version. */
+	const DB_VERSION = '1.0.8';
+
 	public static function activate() {
+		self::install_tables();
+
+		update_option( 'workparcel_db_version', self::DB_VERSION );
+		add_option( 'workparcel_settings', array(
+			'tracking_page' => '',
+			'default_status' => 'pending',
+			'tracking_prefix' => 'WP',
+			'company_name' => get_bloginfo( 'name' ),
+			'tracking_title' => 'Track Your Parcel',
+			'tracking_description' => 'Enter your tracking number to see shipment progress.',
+			'delete_data' => 0,
+		) );
+
+		Capabilities::add();
+	}
+
+	/**
+	 * Runs on every admin load and re-applies dbDelta if the stored schema version is behind.
+	 * dbDelta only ever adds/modifies columns to match the SQL — it never drops data — so this
+	 * is safe to run repeatedly and is how existing installs pick up new columns after an update.
+	 */
+	public static function maybe_upgrade() {
+		if ( get_option( 'workparcel_db_version' ) === self::DB_VERSION ) return;
+		self::install_tables();
+		update_option( 'workparcel_db_version', self::DB_VERSION );
+	}
+
+	private static function install_tables() {
 		global $wpdb;
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
@@ -34,6 +66,11 @@ class Database {
 			shipping_fee decimal(12,2) NOT NULL DEFAULT 0,
 			status varchar(40) NOT NULL DEFAULT 'pending',
 			estimated_delivery date NULL,
+			container_no varchar(190) NOT NULL DEFAULT '',
+			driver_name varchar(190) NOT NULL DEFAULT '',
+			photo varchar(500) NOT NULL DEFAULT '',
+			pod_signature varchar(500) NOT NULL DEFAULT '',
+			pod_photo varchar(500) NOT NULL DEFAULT '',
 			created_at datetime NOT NULL,
 			updated_at datetime NOT NULL,
 			PRIMARY KEY (id),
@@ -57,19 +94,6 @@ class Database {
 
 		dbDelta( $sql1 );
 		dbDelta( $sql2 );
-
-		update_option( 'workparcel_db_version', WORKPARCEL_VERSION );
-		update_option( 'workparcel_settings', array(
-			'tracking_page' => '',
-			'default_status' => 'pending',
-			'tracking_prefix' => 'WP',
-			'company_name' => get_bloginfo( 'name' ),
-			'tracking_title' => 'Track Your Parcel',
-			'tracking_description' => 'Enter your tracking number to see shipment progress.',
-			'delete_data' => 0,
-		) );
-
-		Capabilities::add();
 	}
 
 	public static function deactivate() {}

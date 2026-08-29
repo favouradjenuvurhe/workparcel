@@ -103,6 +103,7 @@ class Mailer {
 		$status_label = $statuses[ $shipment->status ] ?? $shipment->status;
 		$accent       = sanitize_hex_color( $settings['accent_color'] ?? '' ) ?: '#2563eb';
 		$company      = $settings['company_name'] ?: get_bloginfo( 'name' );
+		$events       = array_slice( Tracking::events( $shipment->id ), 0, 5 );
 
 		$track_url = '';
 		if ( ! empty( $settings['tracking_page'] ) ) {
@@ -117,32 +118,36 @@ class Mailer {
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:24px 0;">
 <tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;overflow:hidden;max-width:100%;">
+<table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;overflow:hidden;max-width:100%;">
 	<tr>
 		<td style="background:<?php echo esc_attr( $accent ); ?>;padding:24px 28px;">
-			<?php if ( ! empty( $settings['company_logo'] ) ) : ?>
-				<img src="<?php echo esc_url( $settings['company_logo'] ); ?>" alt="<?php echo esc_attr( $company ); ?>" height="36" style="display:block;margin-bottom:8px;max-height:36px;">
-			<?php endif; ?>
-			<span style="color:#ffffff;font-size:20px;font-weight:bold;font-family:Arial,Helvetica,sans-serif;"><?php echo esc_html( $company ); ?></span>
+			<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+				<tr>
+					<td style="vertical-align:middle;">
+						<?php if ( ! empty( $settings['company_logo'] ) ) : ?>
+							<img src="<?php echo esc_url( $settings['company_logo'] ); ?>" alt="<?php echo esc_attr( $company ); ?>" height="32" style="display:block;margin-bottom:8px;max-height:32px;">
+						<?php endif; ?>
+						<span style="color:#ffffff;font-size:19px;font-weight:bold;font-family:Arial,Helvetica,sans-serif;"><?php echo esc_html( $company ); ?></span>
+					</td>
+					<td style="vertical-align:middle;text-align:right;">
+						<span style="display:inline-block;background:rgba(255,255,255,0.18);color:#ffffff;font-size:12px;font-weight:bold;padding:6px 12px;border-radius:999px;font-family:Arial,Helvetica,sans-serif;"><?php echo esc_html( $status_label ); ?></span>
+					</td>
+				</tr>
+			</table>
 		</td>
 	</tr>
 	<tr>
 		<td style="padding:28px;">
-			<h2 style="margin:0 0 6px;color:#0f172a;font-family:Arial,Helvetica,sans-serif;">
+			<h2 style="margin:0 0 4px;color:#0f172a;font-family:Arial,Helvetica,sans-serif;">
 				<?php echo esc_html( 'created' === $context ? __( 'Your shipment has been created', 'workparcel' ) : __( 'Your shipment status has been updated', 'workparcel' ) ); ?>
 			</h2>
-			<p style="color:#475569;margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;">
-				<?php echo esc_html( sprintf( __( 'Tracking number: %s', 'workparcel' ), $shipment->tracking_number ) ); ?>
+			<p style="color:#64748b;margin:0 0 6px;font-size:13px;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.05em;">
+				<?php esc_html_e( 'Tracking Number', 'workparcel' ); ?>
 			</p>
-
-			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-				<tr>
-					<td style="padding:12px 16px;background:#f8fafc;border-radius:8px;font-family:Arial,Helvetica,sans-serif;">
-						<span style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;"><?php esc_html_e( 'Status', 'workparcel' ); ?></span><br>
-						<strong style="font-size:16px;color:<?php echo esc_attr( $accent ); ?>;"><?php echo esc_html( $status_label ); ?></strong>
-					</td>
-				</tr>
-			</table>
+			<p style="color:#0f172a;margin:0 0 10px;font-size:20px;font-weight:bold;font-family:Arial,Helvetica,sans-serif;letter-spacing:.03em;">
+				<?php echo esc_html( $shipment->tracking_number ); ?>
+			</p>
+			<p style="margin:0 0 22px;"><?php echo Barcode::bars_html( $shipment->tracking_number, 40 ); ?></p>
 
 			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#334155;font-family:Arial,Helvetica,sans-serif;">
 				<tr>
@@ -165,6 +170,20 @@ class Mailer {
 					<td style="vertical-align:top;padding-bottom:16px;"><strong><?php esc_html_e( 'Parcel Type', 'workparcel' ); ?></strong><br><?php echo esc_html( $shipment->parcel_type ?: '—' ); ?></td>
 					<td style="vertical-align:top;padding-bottom:16px;"><strong><?php esc_html_e( 'Weight', 'workparcel' ); ?></strong><br><?php echo esc_html( $shipment->weight > 0 ? $shipment->weight : '—' ); ?></td>
 				</tr>
+				<?php if ( $shipment->container_no || $shipment->driver_name ) : ?>
+				<tr>
+					<?php if ( $shipment->container_no ) : ?>
+						<td style="vertical-align:top;padding-bottom:16px;"><strong><?php esc_html_e( 'Container No.', 'workparcel' ); ?></strong><br><?php echo esc_html( $shipment->container_no ); ?></td>
+					<?php else : ?>
+						<td></td>
+					<?php endif; ?>
+					<?php if ( $shipment->driver_name ) : ?>
+						<td style="vertical-align:top;padding-bottom:16px;"><strong><?php esc_html_e( 'Assigned To', 'workparcel' ); ?></strong><br><?php echo esc_html( $shipment->driver_name ); ?></td>
+					<?php else : ?>
+						<td></td>
+					<?php endif; ?>
+				</tr>
+				<?php endif; ?>
 				<?php if ( $shipment->estimated_delivery ) : ?>
 				<tr>
 					<td colspan="2" style="vertical-align:top;padding-bottom:16px;"><strong><?php esc_html_e( 'Estimated delivery', 'workparcel' ); ?></strong><br><?php echo esc_html( $shipment->estimated_delivery ); ?></td>
@@ -178,6 +197,43 @@ class Mailer {
 					<td style="font-size:16px;color:#0f172a;font-weight:bold;text-align:right;"><?php echo esc_html( number_format_i18n( (float) $shipment->shipping_fee, 2 ) ); ?></td>
 				</tr>
 			</table>
+
+			<?php if ( $shipment->pod_signature || $shipment->pod_photo ) : ?>
+			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:22px;">
+				<tr>
+					<td colspan="2" style="font-size:13px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;font-family:Arial,Helvetica,sans-serif;padding-bottom:8px;"><?php esc_html_e( 'Proof of Delivery', 'workparcel' ); ?></td>
+				</tr>
+				<tr>
+					<?php if ( $shipment->pod_signature ) : ?>
+						<td style="width:50%;vertical-align:top;"><img src="<?php echo esc_url( $shipment->pod_signature ); ?>" alt="<?php esc_attr_e( 'Signature', 'workparcel' ); ?>" style="max-height:80px;max-width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:6px;"></td>
+					<?php else : ?>
+						<td style="width:50%;"></td>
+					<?php endif; ?>
+					<?php if ( $shipment->pod_photo ) : ?>
+						<td style="width:50%;vertical-align:top;"><img src="<?php echo esc_url( $shipment->pod_photo ); ?>" alt="<?php esc_attr_e( 'Delivery Photo', 'workparcel' ); ?>" style="max-height:110px;max-width:100%;border-radius:6px;"></td>
+					<?php else : ?>
+						<td style="width:50%;"></td>
+					<?php endif; ?>
+				</tr>
+			</table>
+			<?php endif; ?>
+
+			<?php if ( $events ) : ?>
+			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;font-family:Arial,Helvetica,sans-serif;">
+				<tr>
+					<td style="font-size:13px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;padding-bottom:8px;"><?php esc_html_e( 'Recent Activity', 'workparcel' ); ?></td>
+				</tr>
+				<?php foreach ( $events as $event ) : ?>
+				<tr>
+					<td style="font-size:13px;color:#334155;padding:6px 0;border-top:1px solid #f1f5f9;">
+						<strong><?php echo esc_html( $statuses[ $event->status ] ?? $event->status ); ?></strong>
+						<?php if ( $event->location ) : ?> — <?php echo esc_html( $event->location ); ?><?php endif; ?>
+						<span style="color:#94a3b8;"> · <?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $event->event_date ) ) ); ?></span>
+					</td>
+				</tr>
+				<?php endforeach; ?>
+			</table>
+			<?php endif; ?>
 
 			<?php if ( $track_url ) : ?>
 			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;">

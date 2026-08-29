@@ -12,11 +12,13 @@ class Plugin {
 	}
 
 	public function init() {
+		add_action( 'admin_init', array( 'Workparcel\\Database', 'maybe_upgrade' ) );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'admin_init', array( 'Workparcel\\Settings', 'register' ) );
 		add_action( 'admin_post_workparcel_save_shipment', array( $this, 'save_shipment' ) );
 		add_action( 'admin_post_workparcel_delete_shipment', array( $this, 'delete_shipment' ) );
 		add_action( 'admin_post_workparcel_add_event', array( $this, 'add_event' ) );
+		add_action( 'wp_ajax_workparcel_scan', array( $this, 'ajax_scan' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_assets' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'public_assets' ) );
 		add_shortcode( 'workparcel_tracking', array( 'Workparcel\\Shortcodes', 'tracking' ) );
@@ -27,7 +29,10 @@ class Plugin {
 		add_submenu_page( 'workparcel', 'Dashboard', 'Dashboard', 'workparcel_view_shipments', 'workparcel', array( $this, 'dashboard' ) );
 		add_submenu_page( 'workparcel', 'Shipments', 'Shipments', 'workparcel_view_shipments', 'workparcel-shipments', array( $this, 'shipments' ) );
 		add_submenu_page( 'workparcel', 'Add Shipment', 'Add Shipment', 'workparcel_create_shipments', 'workparcel-add', array( $this, 'edit_shipment' ) );
+		add_submenu_page( 'workparcel', 'Scan', 'Scan', 'workparcel_edit_shipments', 'workparcel-scan', array( $this, 'scan_page' ) );
 		add_submenu_page( 'workparcel', 'Settings', 'Settings', 'workparcel_manage_settings', 'workparcel-settings', array( 'Workparcel\\Settings', 'page' ) );
+		// Hidden (not shown in the menu): reached only via a "View Invoice" link.
+		add_submenu_page( null, 'Invoice', 'Invoice', 'workparcel_view_shipments', 'workparcel-invoice', array( $this, 'invoice_page' ) );
 	}
 
 	public function admin_assets( $hook ) {
@@ -40,11 +45,38 @@ class Plugin {
 		if ( strpos( $hook, 'workparcel-settings' ) !== false ) {
 			wp_enqueue_media();
 			wp_enqueue_style( 'wp-color-picker' );
-			wp_enqueue_script( 'workparcel-settings', WORKPARCEL_URL . 'admin/js/settings.js', array( 'jquery', 'wp-color-picker' ), WORKPARCEL_VERSION, true );
-			wp_localize_script( 'workparcel-settings', 'workparcelSettings', array(
-				'selectLogoTitle' => __( 'Select company logo', 'workparcel' ),
-				'useLogoText' => __( 'Use this logo', 'workparcel' ),
+			wp_enqueue_script( 'workparcel-media-field', WORKPARCEL_URL . 'admin/js/media-field.js', array( 'jquery' ), WORKPARCEL_VERSION, true );
+			wp_enqueue_script( 'workparcel-settings', WORKPARCEL_URL . 'admin/js/settings.js', array( 'jquery', 'wp-color-picker', 'workparcel-media-field' ), WORKPARCEL_VERSION, true );
+		}
+
+		if ( strpos( $hook, 'workparcel-add' ) !== false ) {
+			wp_enqueue_media();
+			wp_enqueue_script( 'workparcel-media-field', WORKPARCEL_URL . 'admin/js/media-field.js', array( 'jquery' ), WORKPARCEL_VERSION, true );
+		}
+
+		if ( strpos( $hook, 'workparcel-scan' ) !== false ) {
+			wp_enqueue_script( 'workparcel-scan', WORKPARCEL_URL . 'admin/js/scan.js', array( 'jquery' ), WORKPARCEL_VERSION, true );
+			wp_localize_script( 'workparcel-scan', 'workparcelScan', array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce' => wp_create_nonce( 'workparcel_scan' ),
+				'i18n' => array(
+					'currentStatus' => __( 'currently', 'workparcel' ),
+					'newStatus' => __( 'New status', 'workparcel' ),
+					'location' => __( 'Location', 'workparcel' ),
+					'locationPlaceholder' => __( 'Optional', 'workparcel' ),
+					'updateStatus' => __( 'Update Status', 'workparcel' ),
+					'driverName' => __( 'Driver / customer', 'workparcel' ),
+					'driverPlaceholder' => __( 'Name', 'workparcel' ),
+					'assign' => __( 'Assign', 'workparcel' ),
+					'editShipment' => __( 'Edit shipment', 'workparcel' ),
+					'created' => __( 'created', 'workparcel' ),
+				),
 			) );
+		}
+
+		if ( strpos( $hook, 'workparcel-invoice' ) !== false ) {
+			wp_enqueue_style( 'workparcel-invoice', WORKPARCEL_URL . 'admin/css/invoice.css', array(), WORKPARCEL_VERSION );
+			wp_add_inline_style( 'workparcel-invoice', '.wp-workparcel-invoice{--wp-workparcel-accent: ' . $accent . ';}' );
 		}
 	}
 
@@ -123,6 +155,11 @@ class Plugin {
 			'shipping_fee' => isset( $_POST['shipping_fee'] ) ? (float) wp_unslash( $_POST['shipping_fee'] ) : 0,
 			'status' => isset( $_POST['status'] ) ? sanitize_key( $_POST['status'] ) : 'pending',
 			'estimated_delivery' => isset( $_POST['estimated_delivery'] ) ? sanitize_text_field( wp_unslash( $_POST['estimated_delivery'] ) ) : '',
+			'container_no' => isset( $_POST['container_no'] ) ? sanitize_text_field( wp_unslash( $_POST['container_no'] ) ) : '',
+			'driver_name' => isset( $_POST['driver_name'] ) ? sanitize_text_field( wp_unslash( $_POST['driver_name'] ) ) : '',
+			'photo' => isset( $_POST['photo'] ) ? esc_url_raw( wp_unslash( $_POST['photo'] ) ) : '',
+			'pod_signature' => isset( $_POST['pod_signature'] ) ? esc_url_raw( wp_unslash( $_POST['pod_signature'] ) ) : '',
+			'pod_photo' => isset( $_POST['pod_photo'] ) ? esc_url_raw( wp_unslash( $_POST['pod_photo'] ) ) : '',
 		);
 		$result = Shipment::save( $data, $id );
 		if ( is_wp_error( $result ) ) wp_die( esc_html( $result->get_error_message() ) );
@@ -147,19 +184,103 @@ class Plugin {
 		$location = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
 		$description = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
 		$event_date = isset( $_POST['event_date'] ) ? sanitize_text_field( wp_unslash( $_POST['event_date'] ) ) : '';
-		$existing = Shipment::get( $id );
-		$old_status = $existing ? $existing->status : '';
-		Tracking::add_event( $id, $status, $location, $description, $event_date );
-		global $wpdb;
-		$wpdb->update( $wpdb->prefix . 'workparcel_shipments', array(
-			'status' => $status,
-			'updated_at' => current_time( 'mysql' ),
-		), array( 'id' => $id ), array( '%s','%s' ), array( '%d' ) );
-		if ( $existing && $old_status !== $status ) {
-			/** @see class-shipment.php for the same action fired on the Save & Update path. */
-			do_action( 'workparcel_status_changed', $id, $old_status, $status );
-		}
+		Shipment::update_status( $id, $status, $location, $description, $event_date );
 		wp_safe_redirect( admin_url( 'admin.php?page=workparcel-add&id=' . $id . '&message=event_added' ) );
 		exit;
+	}
+
+	public function scan_page() {
+		$this->guard( 'workparcel_edit_shipments' );
+		include WORKPARCEL_DIR . 'admin/views/scan.php';
+	}
+
+	public function invoice_page() {
+		$this->guard( 'workparcel_view_shipments' );
+		$id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+		$shipment = Shipment::get( $id );
+		if ( ! $shipment ) wp_die( esc_html__( 'Shipment not found.', 'workparcel' ) );
+		$events = Tracking::events( $id );
+		$settings = Settings::get();
+		include WORKPARCEL_DIR . 'admin/views/invoice.php';
+	}
+
+	/**
+	 * AJAX endpoint for the barcode scan tool. A physical barcode scanner behaves like a
+	 * keyboard (types the encoded text, then Enter), so the frontend just needs a focused
+	 * text field — this handler does the lookup/create/update/assign work behind it.
+	 */
+	public function ajax_scan() {
+		check_ajax_referer( 'workparcel_scan', 'nonce' );
+
+		$mode = isset( $_POST['mode'] ) ? sanitize_key( $_POST['mode'] ) : '';
+		$tracking = isset( $_POST['tracking_number'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['tracking_number'] ) ) ) : '';
+		if ( ! $tracking ) wp_send_json_error( array( 'message' => __( 'No tracking number scanned.', 'workparcel' ) ) );
+
+		if ( 'create' === $mode ) {
+			if ( ! current_user_can( 'workparcel_create_shipments' ) ) wp_send_json_error( array( 'message' => __( 'You do not have permission to create shipments.', 'workparcel' ) ) );
+
+			$existing = Shipment::find_by_tracking( $tracking );
+			if ( $existing ) {
+				wp_send_json_error( array(
+					'message' => __( 'A shipment with this tracking number already exists.', 'workparcel' ),
+					'edit_url' => admin_url( 'admin.php?page=workparcel-add&id=' . $existing->id ),
+				) );
+			}
+
+			$new_id = Shipment::save( array( 'tracking_number' => $tracking, 'status' => 'pending' ), 0 );
+			if ( is_wp_error( $new_id ) ) wp_send_json_error( array( 'message' => $new_id->get_error_message() ) );
+
+			wp_send_json_success( array(
+				'message' => __( 'Shipment created.', 'workparcel' ),
+				'tracking_number' => $tracking,
+				'edit_url' => admin_url( 'admin.php?page=workparcel-add&id=' . $new_id ),
+			) );
+		}
+
+		if ( 'status' === $mode ) {
+			if ( ! current_user_can( 'workparcel_edit_shipments' ) ) wp_send_json_error( array( 'message' => __( 'You do not have permission to edit shipments.', 'workparcel' ) ) );
+
+			$shipment = Shipment::find_by_tracking( $tracking );
+			if ( ! $shipment ) wp_send_json_error( array( 'message' => __( 'No shipment found for this tracking number.', 'workparcel' ) ) );
+
+			$new_status = isset( $_POST['status'] ) ? sanitize_key( $_POST['status'] ) : '';
+			if ( $new_status ) {
+				$location = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
+				$result = Shipment::update_status( $shipment->id, $new_status, $location, __( 'Status updated via barcode scan.', 'workparcel' ) );
+				if ( is_wp_error( $result ) ) wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+				wp_send_json_success( array( 'message' => __( 'Status updated.', 'workparcel' ), 'tracking_number' => $tracking ) );
+			}
+
+			$statuses = Shipment::statuses();
+			wp_send_json_success( array(
+				'lookup' => true,
+				'tracking_number' => $shipment->tracking_number,
+				'current_status' => $shipment->status,
+				'current_status_label' => $statuses[ $shipment->status ] ?? $shipment->status,
+				'statuses' => $statuses,
+			) );
+		}
+
+		if ( 'assign' === $mode ) {
+			if ( ! current_user_can( 'workparcel_edit_shipments' ) ) wp_send_json_error( array( 'message' => __( 'You do not have permission to edit shipments.', 'workparcel' ) ) );
+
+			$shipment = Shipment::find_by_tracking( $tracking );
+			if ( ! $shipment ) wp_send_json_error( array( 'message' => __( 'No shipment found for this tracking number.', 'workparcel' ) ) );
+
+			$driver = isset( $_POST['driver_name'] ) ? sanitize_text_field( wp_unslash( $_POST['driver_name'] ) ) : '';
+			if ( $driver ) {
+				$result = Shipment::assign_driver( $shipment->id, $driver );
+				if ( is_wp_error( $result ) ) wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+				wp_send_json_success( array( 'message' => __( 'Shipment assigned.', 'workparcel' ), 'tracking_number' => $tracking ) );
+			}
+
+			wp_send_json_success( array(
+				'lookup' => true,
+				'tracking_number' => $shipment->tracking_number,
+				'current_driver' => $shipment->driver_name,
+			) );
+		}
+
+		wp_send_json_error( array( 'message' => __( 'Unknown scan mode.', 'workparcel' ) ) );
 	}
 }

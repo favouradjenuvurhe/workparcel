@@ -110,10 +110,15 @@ class Shipment {
 			'shipping_fee' => max( 0, (float) ( $data['shipping_fee'] ?? 0 ) ),
 			'status' => $status,
 			'estimated_delivery' => ! empty( $data['estimated_delivery'] ) ? sanitize_text_field( $data['estimated_delivery'] ) : null,
+			'container_no' => sanitize_text_field( $data['container_no'] ?? '' ),
+			'driver_name' => sanitize_text_field( $data['driver_name'] ?? '' ),
+			'photo' => ! empty( $data['photo'] ) ? esc_url_raw( $data['photo'] ) : '',
+			'pod_signature' => ! empty( $data['pod_signature'] ) ? esc_url_raw( $data['pod_signature'] ) : '',
+			'pod_photo' => ! empty( $data['pod_photo'] ) ? esc_url_raw( $data['pod_photo'] ) : '',
 			'updated_at' => current_time( 'mysql' ),
 		);
 
-		$formats = array( '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%d','%f','%s','%s','%s' );
+		$formats = array( '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%d','%f','%s','%s','%s','%s','%s','%s','%s' );
 
 		if ( $id ) {
 			$old = self::get( $id );
@@ -162,5 +167,59 @@ class Shipment {
 		$id = absint( $id );
 		$wpdb->delete( $wpdb->prefix . 'workparcel_tracking_events', array( 'shipment_id' => $id ), array( '%d' ) );
 		return $wpdb->delete( $wpdb->prefix . 'workparcel_shipments', array( 'id' => $id ), array( '%d' ) );
+	}
+
+	/**
+	 * Change a shipment's status and log it as a tracking event in one step.
+	 * Shared by the manual "Add Tracking Event" form and the barcode scan tool.
+	 */
+	public static function update_status( $id, $status, $location = '', $note = '', $event_date = '' ) {
+		global $wpdb;
+		$id = absint( $id );
+		$statuses = self::statuses();
+		if ( ! isset( $statuses[ $status ] ) ) return new \WP_Error( 'invalid_status', __( 'Invalid status.', 'workparcel' ) );
+
+		$existing = self::get( $id );
+		if ( ! $existing ) return new \WP_Error( 'not_found', __( 'Shipment not found.', 'workparcel' ) );
+
+		$old_status = $existing->status;
+		$description = $note ?: sprintf( __( 'Shipment status changed to %s.', 'workparcel' ), $statuses[ $status ] );
+		Tracking::add_event( $id, $status, $location, $description, $event_date );
+
+		$wpdb->update( $wpdb->prefix . 'workparcel_shipments', array(
+			'status' => $status,
+			'updated_at' => current_time( 'mysql' ),
+		), array( 'id' => $id ), array( '%s','%s' ), array( '%d' ) );
+
+		if ( $old_status !== $status ) {
+			do_action( 'workparcel_status_changed', $id, $old_status, $status );
+		}
+		return $id;
+	}
+
+	/** Assigns a shipment to a driver or customer for delivery/pickup, logging it in the tracking history. */
+	public static function assign_driver( $id, $driver_name ) {
+		global $wpdb;
+		$id = absint( $id );
+		$driver_name = sanitize_text_field( $driver_name );
+
+		$existing = self::get( $id );
+		if ( ! $existing ) return new \WP_Error( 'not_found', __( 'Shipment not found.', 'workparcel' ) );
+
+		$wpdb->update( $wpdb->prefix . 'workparcel_shipments', array(
+			'driver_name' => $driver_name,
+			'updated_at' => current_time( 'mysql' ),
+		), array( 'id' => $id ), array( '%s','%s' ), array( '%d' ) );
+
+		Tracking::add_event( $id, $existing->status, '', sprintf( __( 'Assigned to %s.', 'workparcel' ), $driver_name ) );
+
+		/**
+		 * Fires after a shipment is assigned to a driver or customer.
+		 *
+		 * @param int    $id          Shipment ID.
+		 * @param string $driver_name Name of the driver/customer it was assigned to.
+		 */
+		do_action( 'workparcel_shipment_assigned', $id, $driver_name );
+		return $id;
 	}
 }

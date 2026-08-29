@@ -91,12 +91,14 @@ class Settings {
 							<tr>
 								<th><label for="workparcel_company_logo"><?php esc_html_e( 'Company logo', 'workparcel' ); ?></label></th>
 								<td>
-									<div class="wp-workparcel-logo-field">
-										<img id="workparcel_company_logo_preview" src="<?php echo esc_url( $s['company_logo'] ); ?>" alt="" style="<?php echo $s['company_logo'] ? '' : 'display:none;'; ?>">
-										<input type="hidden" id="workparcel_company_logo" name="workparcel_settings[company_logo]" value="<?php echo esc_attr( $s['company_logo'] ); ?>">
-										<button type="button" class="button" id="workparcel_company_logo_select"><?php esc_html_e( 'Select Image', 'workparcel' ); ?></button>
-										<button type="button" class="button" id="workparcel_company_logo_remove" style="<?php echo $s['company_logo'] ? '' : 'display:none;'; ?>"><?php esc_html_e( 'Remove', 'workparcel' ); ?></button>
-									</div>
+									<?php
+									$mf_name = 'workparcel_settings[company_logo]';
+									$mf_id = 'workparcel_company_logo';
+									$mf_value = $s['company_logo'];
+									$mf_title = __( 'Select company logo', 'workparcel' );
+									$mf_button = __( 'Use this logo', 'workparcel' );
+									include WORKPARCEL_DIR . 'admin/views/partials/media-field.php';
+									?>
 								</td>
 							</tr>
 							<tr>
