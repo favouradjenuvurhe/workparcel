@@ -4,7 +4,7 @@ Tags: shipment tracking, parcel tracking, order tracking, delivery, woocommerce
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ Create shipments, generate tracking numbers automatically, log every status chan
 * Role-based capabilities for viewing, creating, editing, and deleting shipments
 * Translation-ready strings
 * Developer hooks and filters for third-party integrations
+* Printable/PDF-ready shipment invoice with a barcode-style header, shipper/receiver details, package info, and tracking history
+* Optional shipment photo and Proof of Delivery (signature + photo) uploads, shown on the invoice and in emails when set
+* Barcode scan tool: create shipments, update status, or assign a driver/customer by scanning with any USB/Bluetooth barcode scanner
 
 = Who is Workparcel for? =
 
@@ -87,6 +90,18 @@ Yes. Enable "Delete data on uninstall" under Settings → Advanced before you un
 
 Yes, all strings are wrapped for translation using the `workparcel` text domain.
 
+= Can I print or download a shipment invoice? =
+
+Yes. Open any shipment and click "View Invoice" for a clean, printable invoice with the tracking number, shipper/receiver details, package info, and tracking history. Use your browser's Print → Save as PDF to download it.
+
+= Can I attach a photo or a delivery signature to a shipment? =
+
+Yes, both are optional. On the Add/Edit Shipment screen you can attach a shipment/package photo and, once delivered, a Proof of Delivery signature and photo — all pulled from your WordPress Media Library. When set, they appear on the invoice and in the shipment emails.
+
+= Does Workparcel support barcode scanners? =
+
+Yes. Go to Workparcel → Scan, connect any USB or Bluetooth barcode scanner (they work like a keyboard), and scan a label to instantly create a shipment, update its status, or assign it to a driver or customer — no typing required.
+
 == Screenshots ==
 
 1. Dashboard — shipment totals, status breakdown, and recent shipments at a glance.
@@ -96,6 +111,17 @@ Yes, all strings are wrapped for translation using the `workparcel` text domain.
 5. Settings — company branding, your own accent color, and notification preferences.
 
 == Changelog ==
+
+= 1.0.8 =
+* Added a printable shipment invoice ("View Invoice" on any shipment): tracking number with a barcode-style header, shipper/receiver details, package info, container/driver info, Proof of Delivery, and full shipment history — styled to be cleaner and more modern than typical cargo-invoice templates, and works with your browser's Print → Save as PDF.
+* Redesigned the shipment-created and status-update emails to match the new invoice look: barcode header, shipper/receiver blocks, container/driver info, Proof of Delivery images, and recent activity — still HTML-table based so it renders correctly across email clients.
+* Added optional shipment photo and Proof of Delivery (signature + photo) fields on Add/Edit Shipment, using the WordPress Media Library. All optional — nothing is required to keep using the plugin as before.
+* Added Container No. and Assigned To (driver/customer) fields to shipments.
+* Added Workparcel → Scan: a barcode-scanner-friendly tool with three modes — Create Shipment (scan a new label to create it instantly), Update Status (scan, then confirm a new status), and Assign Driver/Customer (scan, then assign) — works with any USB/Bluetooth barcode scanner, which behaves like a keyboard.
+* Added a `workparcel_shipment_assigned` action hook, fired when a shipment is assigned to a driver/customer.
+* Refactored status-changing logic into a shared `Shipment::update_status()` method used by both the manual "Add Tracking Event" form and the new Scan tool, so behavior (including notification emails) stays consistent everywhere a status change happens.
+* Generalized the company-logo image picker into a reusable component now also used for the new shipment photo and signature fields.
+* Database schema updated (new columns only — no data loss) with a safe upgrade routine that runs automatically on your next admin page load after updating.
 
 = 1.0.7 =
 * SEO and WordPress.org directory overhaul: rewritten description, features, and FAQ; added a Screenshots section with real interface previews; refreshed plugin icon and banner assets.
@@ -148,6 +174,9 @@ Yes, all strings are wrapped for translation using the `workparcel` text domain.
 * Initial MVP release.
 
 == Upgrade Notice ==
+
+= 1.0.8 =
+Adds a printable shipment invoice, redesigned emails, optional shipment/Proof-of-Delivery photos, and a barcode scan tool for creating shipments, updating status, and driver assignment. Includes a safe automatic database update (new columns only).
 
 = 1.0.7 =
 Adds company branding (logo, accent color), HTML email notifications for shipment updates, and a WordPress.org directory refresh (screenshots, SEO-focused description).

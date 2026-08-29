@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Workparcel
  * Description: Shipment management and a branded parcel tracking page for WordPress, with WooCommerce order integration and email notifications.
- * Version: 1.0.7
+ * Version: 1.0.8
  * Author: faav11_
  * License: GPL-2.0-or-later
  * Text Domain: workparcel
@@ -14,13 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WORKPARCEL_VERSION', '1.0.7' );
+define( 'WORKPARCEL_VERSION', '1.0.8' );
 define( 'WORKPARCEL_FILE', __FILE__ );
 define( 'WORKPARCEL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WORKPARCEL_URL', plugin_dir_url( __FILE__ ) );
 
 require_once WORKPARCEL_DIR . 'includes/class-database.php';
 require_once WORKPARCEL_DIR . 'includes/class-capabilities.php';
+require_once WORKPARCEL_DIR . 'includes/class-barcode.php';
 require_once WORKPARCEL_DIR . 'includes/class-shipment.php';
 require_once WORKPARCEL_DIR . 'includes/class-tracking.php';
 require_once WORKPARCEL_DIR . 'includes/class-settings.php';
