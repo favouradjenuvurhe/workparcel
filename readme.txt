@@ -4,7 +4,7 @@ Tags: shipment tracking, parcel tracking, order tracking, delivery, woocommerce
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.8
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,7 +42,9 @@ Create shipments, generate tracking numbers automatically, log every status chan
 * Developer hooks and filters for third-party integrations
 * Printable/PDF-ready shipment invoice with a barcode-style header, shipper/receiver details, package info, and tracking history
 * Optional shipment photo and Proof of Delivery (signature + photo) uploads, shown on the invoice and in emails when set
-* Barcode scan tool: create shipments, update status, or assign a driver/customer by scanning with any USB/Bluetooth barcode scanner
+* Optional, shortcode-based Scan page: create shipments, update status, or assign a driver/customer by scanning with any USB/Bluetooth barcode scanner — no wp-admin login required
+* Customers registry: register drivers and receivers, each with an auto-generated Scan ID
+* REST API (toggleable) for shipments, customers, and a public read-only tracking lookup
 
 = Who is Workparcel for? =
 
@@ -100,7 +102,15 @@ Yes, both are optional. On the Add/Edit Shipment screen you can attach a shipmen
 
 = Does Workparcel support barcode scanners? =
 
-Yes. Go to Workparcel → Scan, connect any USB or Bluetooth barcode scanner (they work like a keyboard), and scan a label to instantly create a shipment, update its status, or assign it to a driver or customer — no typing required.
+Yes. Under Settings → Scan & API, enable the Scan page and place the `[workparcel_scan]` shortcode on any WordPress page — no wp-admin login needed. A logged-in staff member with shipment permissions can use it directly; anyone else (a driver or customer) signs in with their own Scan ID first. Connect any USB or Bluetooth barcode scanner (they work like a keyboard) and scan a label to instantly create a shipment, update its status, or assign it to a driver or customer.
+
+= What is a Scan ID? =
+
+An automatically generated, 11-character ID given to each driver or customer you register under Workparcel → Customers. It's how they sign in to the public Scan page without needing a WordPress account, and it's also how you assign a shipment to them — scan the shipment, then scan their Scan ID.
+
+= Does Workparcel have a REST API? =
+
+Yes, under Settings → Scan & API. It's on by default and covers shipments (list, create, update, delete, status changes), customers, and a public read-only tracking lookup. Authenticated endpoints require a WordPress user with the matching Workparcel capability — use an Application Password from your user profile for external access.
 
 == Screenshots ==
 
@@ -111,6 +121,15 @@ Yes. Go to Workparcel → Scan, connect any USB or Bluetooth barcode scanner (th
 5. Settings — company branding, your own accent color, and notification preferences.
 
 == Changelog ==
+
+= 1.1.0 =
+* Moved the barcode Scan tool out of wp-admin entirely: it's now the `[workparcel_scan]` shortcode, off by default (enable it under Settings → Scan & API), so it can be placed on any WordPress page and used without a wp-admin login.
+* Added Workparcel → Customers: a registry of drivers and receivers. Each gets an automatically generated, unique 11-character Scan ID (unambiguous character set — no 0/O or 1/I/L mix-ups).
+* The Scan page is protected: a logged-in staff member with shipment permissions can use it directly; anyone else must sign in with a registered, active Scan ID first. Every scan action is re-verified server-side — nothing is trusted from the page alone.
+* Assigning a shipment to a driver/customer is now done through the Customers registry instead of free text — pick them from a dropdown on Add/Edit Shipment, or scan their Scan ID directly on the Scan page.
+* Added a REST API under `workparcel/v1` (toggleable in Settings → Scan & API, on by default): shipments (list/get/create/update/delete/status), customers, and a public read-only tracking lookup. Authenticated endpoints use standard WordPress capability checks — pair with an Application Password for external access.
+* Added a `workparcel_customer_created` action hook.
+* Database schema updated (new `customer_id` column on shipments, new customers table — no data loss), applied automatically via the existing safe upgrade routine.
 
 = 1.0.8 =
 * Added a printable shipment invoice ("View Invoice" on any shipment): tracking number with a barcode-style header, shipper/receiver details, package info, container/driver info, Proof of Delivery, and full shipment history — styled to be cleaner and more modern than typical cargo-invoice templates, and works with your browser's Print → Save as PDF.
@@ -174,6 +193,9 @@ Yes. Go to Workparcel → Scan, connect any USB or Bluetooth barcode scanner (th
 * Initial MVP release.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Moves the Scan tool to a shortcode (off by default), adds a Customers registry with auto-generated Scan IDs, and adds a toggleable REST API. Note: if you were using Workparcel → Scan in wp-admin before, that menu is gone — enable the new shortcode under Settings → Scan & API instead.
 
 = 1.0.8 =
 Adds a printable shipment invoice, redesigned emails, optional shipment/Proof-of-Delivery photos, and a barcode scan tool for creating shipments, updating status, and driver assignment. Includes a safe automatic database update (new columns only).
