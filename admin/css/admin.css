@@ -1,4 +1,4 @@
-/* Workparcel Admin UI — v1.1.0 */
+/* Workparcel Admin UI — v1.1.1 */
 
 .wp-workparcel-wrap,
 .wp-workparcel-wrap * {
@@ -256,7 +256,7 @@
 
 .wp-workparcel-inline-form {
 	display: inline;
-	margin-left: 8px;
+	margin-inline-start: 8px;
 }
 
 /* ---------- Status badges ---------- */
@@ -314,7 +314,7 @@
 .wp-workparcel-event:not(:last-child)::before {
 	content: "";
 	position: absolute;
-	left: 5px;
+	inset-inline-start: 5px;
 	top: 16px;
 	bottom: 0;
 	width: 2px;
@@ -366,6 +366,7 @@
 
 .wp-workparcel-tabs {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 4px;
 	border-bottom: 1px solid #dcdcde;
 	margin: 16px 0 0;
@@ -495,4 +496,29 @@
 	.wp-workparcel-actions {
 		white-space: normal;
 	}
+}
+
+/* ---------- 1.1.1 additions ---------- */
+a.wp-workparcel-stat {
+	display: block;
+	text-decoration: none;
+	color: inherit;
+	transition: box-shadow 0.15s ease;
+}
+
+a.wp-workparcel-stat:hover,
+a.wp-workparcel-stat:focus-visible {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	outline: 2px solid transparent;
+}
+
+.wp-workparcel-stat-out_for_delivery { border-top-color: #0e7490; }
+.wp-workparcel-stat-failed_delivery { border-top-color: #b91c1c; }
+
+.wp-workparcel-table-scroll {
+	overflow-x: auto;
+}
+
+.wp-workparcel-actor {
+	margin-inline-start: 6px;
 }

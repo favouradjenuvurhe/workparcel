@@ -1,4 +1,4 @@
-/* Workparcel Invoice — v1.0.8 */
+/* Workparcel Invoice — v1.1.1 */
 
 .wp-workparcel-invoice-actions {
 	margin: 16px 0;
@@ -55,7 +55,7 @@
 }
 
 .wp-workparcel-invoice-brand {
-	text-align: right;
+	text-align: end;
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
@@ -166,9 +166,9 @@
 }
 
 .wp-workparcel-invoice-table th {
-	text-align: left;
+	text-align: start;
 	background: var(--wp-workparcel-accent, #2563eb);
-	color: #fff;
+	color: var(--wp-workparcel-accent-text, #fff);
 	padding: 9px 10px;
 	font-weight: 600;
 }
@@ -226,6 +226,18 @@
 }
 
 @media print {
+	/* Browsers drop background colours when printing unless told otherwise: without this the table header text (white on accent) vanished. */
+	.wp-workparcel-invoice,
+	.wp-workparcel-invoice * {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	.wp-workparcel-invoice-card,
+	.wp-workparcel-invoice-table tr {
+		break-inside: avoid;
+	}
+
 	#adminmenumain,
 	#wpadminbar,
 	#wpfooter,
@@ -250,4 +262,10 @@
 		border: none;
 		padding: 0;
 	}
+}
+
+.wp-workparcel-invoice-barcode svg {
+	display: block;
+	max-width: 100%;
+	height: auto;
 }
