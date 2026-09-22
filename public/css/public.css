@@ -1,4 +1,4 @@
-/* Workparcel Public Tracker — v1.0.7 (plain, theme-agnostic layout) */
+/* Workparcel Public Tracker — v1.1.1 (plain, theme-agnostic layout) */
 
 .wp-workparcel-tracker,
 .wp-workparcel-tracker * {
@@ -89,7 +89,7 @@
 	font-size: 15px;
 	font-weight: 600;
 	background: var(--wp-workparcel-accent, #2563eb);
-	color: #fff;
+	color: var(--wp-workparcel-accent-text, #fff);
 	flex: 0 0 auto;
 	white-space: nowrap;
 }
@@ -100,14 +100,15 @@
 
 /* ---------- Alerts ---------- */
 .wp-workparcel-alert {
-	padding: 10px 0 10px 14px;
-	border-left: 3px solid #f59e0b;
+	padding: 10px 0;
+	padding-inline-start: 14px;
+	border-inline-start: 3px solid #f59e0b;
 	margin: 0 0 18px;
 	color: #92400e;
 }
 
 .wp-workparcel-alert-status {
-	border-left-color: #dc2626;
+	border-inline-start-color: #dc2626;
 	color: #991b1b;
 }
 
@@ -204,7 +205,7 @@
 	content: "";
 	position: absolute;
 	top: 15px;
-	left: -50%;
+	inset-inline-start: -50%;
 	width: 100%;
 	height: 3px;
 	background: #e2e8f0;
@@ -230,7 +231,7 @@
 
 .wp-workparcel-step-label {
 	font-size: 11.5px;
-	color: #94a3b8;
+	color: #64748b;
 	line-height: 1.3;
 	display: block;
 }
@@ -336,5 +337,51 @@
 
 	.wp-workparcel-step {
 		min-width: 74px;
+	}
+}
+
+/* ---------- Phones: vertical stepper (the horizontal one wrapped and drew stray connector lines) ---------- */
+@media (max-width: 600px) {
+	.wp-workparcel-stepper {
+		flex-direction: column;
+		margin-top: 20px;
+	}
+
+	.wp-workparcel-step {
+		flex: none;
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		min-width: 0;
+		padding: 0 0 16px;
+		text-align: start;
+	}
+
+	.wp-workparcel-step::before {
+		display: none;
+	}
+
+	.wp-workparcel-step-dot {
+		margin: 0;
+		flex: 0 0 14px;
+	}
+
+	.wp-workparcel-step-label {
+		font-size: 13px;
+		line-height: 14px;
+	}
+
+	.wp-workparcel-step:not(:last-child)::after {
+		content: "";
+		position: absolute;
+		inset-inline-start: 5.5px;
+		top: 14px;
+		bottom: 0;
+		width: 3px;
+		background: #e2e8f0;
+	}
+
+	.wp-workparcel-step-done:not(:last-child)::after {
+		background: var(--wp-workparcel-accent, #2563eb);
 	}
 }
