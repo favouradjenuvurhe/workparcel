@@ -4,7 +4,7 @@ Tags: shipment tracking, parcel tracking, order tracking, delivery, woocommerce
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,7 +22,7 @@ Create shipments, generate tracking numbers automatically, log every status chan
 * **Branded, not generic** — your company name, logo, and accent color appear on the admin dashboard, the public tracking page, and shipment emails.
 * **Works with WooCommerce** — link any WooCommerce order to a shipment and its tracking status shows automatically on the customer's order page and order emails. High-Performance Order Storage (HPOS) compatible.
 * **Real tracking history** — every status change (Pending, Processing, Picked Up, In Transit, At Facility, Out for Delivery, Delivered, Failed Delivery, Cancelled) is logged with a location, a note, and a timestamp, and shown to customers as a visual progress stepper.
-* **Automatic email notifications** — shipment-created and status-update emails can go out to the sender, the receiver, and the site admin, using a clean HTML template with your branding. Emails only send when a working SMTP sender is detected, so you never get silent failures from unreliable default mail delivery.
+* **Automatic email notifications** — shipment-created and status-update emails can go out to the sender, the receiver, and the site admin, using a clean HTML template with your branding. By default emails only send when a working SMTP sender is detected, so you never get silent failures from unreliable default mail delivery; a setting lets you send anyway if your host or mail plugin is reliable.
 * **Extensible for developers** — filter and action hooks (`workparcel_statuses`, `workparcel_shipment_created`, `workparcel_shipment_updated`, `workparcel_status_changed`, `workparcel_tracking_event_added`) let you connect Workparcel to other plugins and custom workflows.
 * **Fast and self-contained** — its own database tables, its own capabilities, no bloat, no page builder dependency, and admin assets that only load on Workparcel screens.
 
@@ -30,7 +30,7 @@ Create shipments, generate tracking numbers automatically, log every status chan
 
 * Shipment management dashboard with live stats and recent shipments
 * Automatic, prefixable tracking number generation
-* Custom shipment statuses with a visual progress stepper on the tracking page
+* Shipment statuses (extendable with the `workparcel_statuses` filter) with a visual progress stepper on the tracking page
 * Full tracking history/timeline per shipment
 * Public tracking page via the `[workparcel_tracking]` shortcode — plain, full-width, and theme-agnostic so it matches any WordPress theme instead of fighting it
 * Search and status filtering in the admin shipment list
@@ -40,7 +40,7 @@ Create shipments, generate tracking numbers automatically, log every status chan
 * Role-based capabilities for viewing, creating, editing, and deleting shipments
 * Translation-ready strings
 * Developer hooks and filters for third-party integrations
-* Printable/PDF-ready shipment invoice with a barcode-style header, shipper/receiver details, package info, and tracking history
+* Printable/PDF-ready shipment invoice with a real, scannable Code 128 barcode, shipper/receiver details, package info, and tracking history
 * Optional shipment photo and Proof of Delivery (signature + photo) uploads, shown on the invoice and in emails when set
 * Optional, shortcode-based Scan page: create shipments, update status, or assign a driver/customer by scanning with any USB/Bluetooth barcode scanner — no wp-admin login required
 * Customers registry: register drivers and receivers, each with an auto-generated Scan ID
@@ -78,7 +78,7 @@ Yes. Workparcel is High-Performance Order Storage (HPOS) compatible. Open any Wo
 
 = Will Workparcel send emails automatically? =
 
-Yes, if you want it to. Under Settings → Notifications you can choose to email the sender, the receiver, and/or the admin whenever a shipment is created or its status changes. To avoid emails silently failing, Workparcel only sends them when it detects a working SMTP sender (a plugin like WP Mail SMTP, FluentSMTP, Easy WP SMTP, or Post SMTP, or a defined SMTP_HOST). If no SMTP sender is detected, notifications are skipped rather than sent through an unreliable default mail transport.
+Yes, if you want it to. Under Settings → Notifications you can choose to email the sender, the receiver, and/or the admin whenever a shipment is created or its status changes. To avoid emails silently failing, Workparcel only sends them when it detects a working SMTP sender (a plugin like WP Mail SMTP, FluentSMTP, Easy WP SMTP, or Post SMTP, or a defined SMTP_HOST). If no SMTP sender is detected, notifications are skipped rather than sent through an unreliable default mail transport — unless you tick "Send notifications anyway" under Settings → Notifications (for example when you use an API-based mailer that Workparcel cannot detect).
 
 = Can I change the colors to match my brand? =
 
@@ -121,6 +121,23 @@ Yes, under Settings → Scan & API. It's on by default and covers shipments (lis
 5. Settings — company branding, your own accent color, and notification preferences.
 
 == Changelog ==
+
+= 1.1.1 =
+* Fixed: updating a shipment through the REST API (for example a PATCH with only a status) no longer wipes the other fields, resets the status to Pending or generates a new tracking number. Missing fields now keep their stored value.
+* Fixed: tracking-event times were shifted by the site's UTC offset on the public tracking page, admin timeline, invoice and emails. Dates now use the site timezone and date format everywhere (including estimated delivery and created dates).
+* Fixed: a PHP notice on every unfiltered Shipments list load.
+* Fixed: saving a shipment could silently un-assign it when the assignee was inactive or beyond the first 100 customers, and erased free-text "Assigned To" names from before 1.1.0.
+* Fixed: deleting a customer now un-assigns their shipments; customers need a name; duplicate tracking numbers show a clear message; tracking numbers are stored trimmed and uppercase.
+* Privacy: scan and assignment notes no longer include the driver/customer name on the public tracking page or the public REST lookup. Who made an update is kept privately (new `actor` field, shown to staff only). Existing older notes are not rewritten.
+* Scan page: failed requests now show an error instead of nothing; the nonce is refreshed automatically so page-caching plugins no longer break it; all server text is escaped before display; repeated unrecognized Scan IDs are temporarily blocked; new `workparcel_scan_actor_can` filter to restrict what drivers/customers may do.
+* The invoice now has a real, scannable Code 128 barcode and prints correctly (table header and barcode were invisible with default print settings).
+* Added Settings → Tracking: Default status (was stored but never used) and Currency (shown next to fees on invoices and emails).
+* Added Settings → Notifications: "Send notifications anyway" plus a detection status line.
+* Emails and buttons pick black or white text automatically so light accent colours stay readable.
+* WooCommerce: plain-text order emails no longer receive HTML, and a deleted tracking page no longer produces a link to the current page.
+* Admin UI: dashboard cards link to the filtered list and include Out for Delivery and Failed Delivery; Invoice button in the Shipments list; the Workparcel menu stays open on the Invoice and Add/Edit Customer screens; Settings tabs wrap on small screens and remember the open tab after saving; corrected the misleading Status help text; RTL-friendly spacing.
+* Public tracking page: vertical progress stepper on phones (no stray connector lines), better contrast for upcoming steps.
+* The database upgrade now runs on the first request after an update, not only in wp-admin. Removed unused admin scan files.
 
 = 1.1.0 =
 * Moved the barcode Scan tool out of wp-admin entirely: it's now the `[workparcel_scan]` shortcode, off by default (enable it under Settings → Scan & API), so it can be placed on any WordPress page and used without a wp-admin login.
@@ -193,6 +210,9 @@ Yes, under Settings → Scan & API. It's on by default and covers shipments (lis
 * Initial MVP release.
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+Important fixes: REST updates no longer erase shipment data, event times use your site timezone, and driver names no longer appear on the public tracking page. Includes a small automatic database update (one new column).
 
 = 1.1.0 =
 Moves the Scan tool to a shortcode (off by default), adds a Customers registry with auto-generated Scan IDs, and adds a toggleable REST API. Note: if you were using Workparcel → Scan in wp-admin before, that menu is gone — enable the new shortcode under Settings → Scan & API instead.
