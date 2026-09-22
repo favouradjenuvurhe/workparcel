@@ -7,8 +7,8 @@
 	?>
 
 	<?php $message = isset( $_GET['message'] ) ? sanitize_key( wp_unslash( $_GET['message'] ) ) : ''; ?>
-	<?php if ( $message ) : ?>
-		<div class="notice notice-success is-dismissible"><p><?php echo esc_html( 'saved' === $message ? __( 'Customer saved.', 'workparcel' ) : __( 'Customer deleted.', 'workparcel' ) ); ?></p></div>
+	<?php if ( in_array( $message, array( 'saved', 'deleted' ), true ) ) : ?>
+		<div class="notice notice-success is-dismissible"><p><?php echo esc_html( 'deleted' === $message ? __( 'Customer deleted.', 'workparcel' ) : __( 'Customer saved.', 'workparcel' ) ); ?></p></div>
 	<?php endif; ?>
 
 	<div class="wp-workparcel-panel">
@@ -70,7 +70,7 @@
 				</tbody>
 			</table>
 			<?php if ( $result['pages'] > 1 ) : ?>
-				<div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post( paginate_links( array( 'base' => add_query_arg( 'paged', '%#%' ), 'format' => '', 'current' => max( 1, isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1 ), 'total' => $result['pages'] ) ) ); ?></div></div>
+				<div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post( paginate_links( array( 'base' => add_query_arg( 'paged', '%#%', remove_query_arg( 'message' ) ), 'format' => '', 'current' => max( 1, isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1 ), 'total' => $result['pages'] ) ) ); ?></div></div>
 			<?php endif; ?>
 		<?php endif; ?>
 	</div>

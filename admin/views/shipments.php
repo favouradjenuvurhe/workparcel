@@ -7,8 +7,8 @@
 	?>
 
 	<?php $message = isset( $_GET['message'] ) ? sanitize_key( wp_unslash( $_GET['message'] ) ) : ''; ?>
-	<?php if ( $message ) : ?>
-		<div class="notice notice-success is-dismissible"><p><?php echo esc_html( 'saved' === $message ? __( 'Shipment saved.', 'workparcel' ) : __( 'Shipment deleted.', 'workparcel' ) ); ?></p></div>
+	<?php if ( in_array( $message, array( 'saved', 'deleted' ), true ) ) : ?>
+		<div class="notice notice-success is-dismissible"><p><?php echo esc_html( 'deleted' === $message ? __( 'Shipment deleted.', 'workparcel' ) : __( 'Shipment saved.', 'workparcel' ) ); ?></p></div>
 	<?php endif; ?>
 
 	<div class="wp-workparcel-panel">
@@ -32,6 +32,7 @@
 				<a class="button button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=workparcel-add' ) ); ?>"><?php esc_html_e( 'Add Shipment', 'workparcel' ); ?></a>
 			</div>
 		<?php else : ?>
+			<div class="wp-workparcel-table-scroll">
 			<table class="widefat striped wp-workparcel-table">
 				<thead>
 					<tr>
@@ -59,10 +60,11 @@
 						<td data-label="<?php esc_attr_e( 'Status', 'workparcel' ); ?>">
 							<span class="wp-workparcel-badge wp-workparcel-badge-<?php echo esc_attr( $item->status ); ?>"><?php echo esc_html( \Workparcel\Shipment::statuses()[ $item->status ] ?? $item->status ); ?></span>
 						</td>
-						<td data-label="<?php esc_attr_e( 'Estimated Delivery', 'workparcel' ); ?>"><?php echo esc_html( $item->estimated_delivery ?: '—' ); ?></td>
-						<td data-label="<?php esc_attr_e( 'Created', 'workparcel' ); ?>"><?php echo esc_html( $item->created_at ); ?></td>
+						<td data-label="<?php esc_attr_e( 'Estimated Delivery', 'workparcel' ); ?>"><?php echo esc_html( \Workparcel\Shipment::format_date( $item->estimated_delivery ) ?: '—' ); ?></td>
+						<td data-label="<?php esc_attr_e( 'Created', 'workparcel' ); ?>"><?php echo esc_html( \Workparcel\Shipment::format_date( $item->created_at, true ) ); ?></td>
 						<td data-label="<?php esc_attr_e( 'Actions', 'workparcel' ); ?>" class="wp-workparcel-actions">
 							<a class="button button-small" href="<?php echo esc_url( admin_url( 'admin.php?page=workparcel-add&id=' . $item->id ) ); ?>"><?php esc_html_e( 'Edit', 'workparcel' ); ?></a>
+							<a class="button button-small" target="_blank" rel="noopener" href="<?php echo esc_url( admin_url( 'admin.php?page=workparcel-invoice&id=' . $item->id ) ); ?>"><?php esc_html_e( 'Invoice', 'workparcel' ); ?></a>
 							<?php if ( current_user_can( 'workparcel_delete_shipments' ) ) : ?>
 							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-workparcel-inline-form" onsubmit="return confirm('<?php echo esc_js( __( 'Delete this shipment?', 'workparcel' ) ); ?>');">
 								<input type="hidden" name="action" value="workparcel_delete_shipment">
@@ -76,8 +78,9 @@
 				<?php endforeach; ?>
 				</tbody>
 			</table>
+			</div>
 			<?php if ( $result['pages'] > 1 ) : ?>
-				<div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post( paginate_links( array( 'base' => add_query_arg( 'paged', '%#%' ), 'format' => '', 'current' => max( 1, isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1 ), 'total' => $result['pages'] ) ) ); ?></div></div>
+				<div class="tablenav"><div class="tablenav-pages"><?php echo wp_kses_post( paginate_links( array( 'base' => add_query_arg( 'paged', '%#%', remove_query_arg( 'message' ) ), 'format' => '', 'current' => max( 1, isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1 ), 'total' => $result['pages'] ) ) ); ?></div></div>
 			<?php endif; ?>
 		<?php endif; ?>
 	</div>

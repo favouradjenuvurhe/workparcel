@@ -113,7 +113,8 @@
 										<strong><?php echo esc_html( \Workparcel\Shipment::statuses()[ $event->status ] ?? $event->status ); ?></strong>
 										<?php if ( $event->location ) : ?><span class="wp-workparcel-location"><?php echo esc_html( $event->location ); ?></span><?php endif; ?>
 										<?php if ( $event->description ) : ?><p><?php echo esc_html( $event->description ); ?></p><?php endif; ?>
-										<small><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $event->event_date ) ) ); ?></small>
+										<small><?php echo esc_html( \Workparcel\Shipment::format_date( $event->event_date, true ) ); ?></small>
+											<?php if ( ! empty( $event->actor ) ) : ?><small class="wp-workparcel-actor"><?php echo esc_html( sprintf( /* translators: %s: person who made the update */ __( '· by %s', 'workparcel' ), $event->actor ) ); ?></small><?php endif; ?>
 									</div>
 								</div>
 							<?php endforeach; ?>
@@ -153,12 +154,12 @@
 					<p><label for="wp-wc-status" class="screen-reader-text"><?php esc_html_e( 'Current status', 'workparcel' ); ?></label>
 						<select id="wp-wc-status" class="widefat" name="status">
 							<?php foreach ( \Workparcel\Shipment::statuses() as $key => $label ) : ?>
-								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $shipment->status ?? 'pending', $key ); ?>><?php echo esc_html( $label ); ?></option>
+								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $shipment->status ?? \Workparcel\Shipment::default_status(), $key ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</p>
 					<?php if ( $shipment ) : ?>
-						<p class="wp-workparcel-muted-text"><?php esc_html_e( 'Changing this dropdown updates the status without logging a tracking event. Use “Add Tracking Event” below to record location and history.', 'workparcel' ); ?></p>
+						<p class="wp-workparcel-muted-text"><?php esc_html_e( 'Changing the status here also logs a tracking event and sends notifications. Use “Add Tracking Event” below when you also want to record a location, a note or a date.', 'workparcel' ); ?></p>
 					<?php endif; ?>
 					<p><label for="wp-wc-customer_id"><?php esc_html_e( 'Assigned To (driver / customer)', 'workparcel' ); ?><br>
 						<select id="wp-wc-customer_id" class="widefat" name="customer_id">

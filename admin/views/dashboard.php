@@ -11,11 +11,13 @@
 			<span class="wp-workparcel-stat-label"><?php esc_html_e( 'Total Shipments', 'workparcel' ); ?></span>
 			<strong class="wp-workparcel-stat-value"><?php echo esc_html( $total ); ?></strong>
 		</div>
-		<?php foreach ( array( 'pending', 'in_transit', 'delivered' ) as $key ) : ?>
-			<div class="wp-workparcel-stat wp-workparcel-stat-<?php echo esc_attr( $key ); ?>">
+		<?php foreach ( array( 'pending', 'in_transit', 'out_for_delivery', 'delivered', 'failed_delivery' ) as $key ) :
+			if ( ! isset( $stats[ $key ] ) ) continue;
+			?>
+			<a class="wp-workparcel-stat wp-workparcel-stat-<?php echo esc_attr( $key ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=workparcel-shipments&status=' . $key ) ); ?>">
 				<span class="wp-workparcel-stat-label"><?php echo esc_html( \Workparcel\Shipment::statuses()[ $key ] ); ?></span>
 				<strong class="wp-workparcel-stat-value"><?php echo esc_html( $stats[ $key ] ); ?></strong>
-			</div>
+			</a>
 		<?php endforeach; ?>
 	</div>
 
@@ -49,7 +51,7 @@
 						<td data-label="<?php esc_attr_e( 'Status', 'workparcel' ); ?>">
 							<span class="wp-workparcel-badge wp-workparcel-badge-<?php echo esc_attr( $item->status ); ?>"><?php echo esc_html( \Workparcel\Shipment::statuses()[ $item->status ] ?? $item->status ); ?></span>
 						</td>
-						<td data-label="<?php esc_attr_e( 'Created', 'workparcel' ); ?>"><?php echo esc_html( $item->created_at ); ?></td>
+						<td data-label="<?php esc_attr_e( 'Created', 'workparcel' ); ?>"><?php echo esc_html( \Workparcel\Shipment::format_date( $item->created_at, true ) ); ?></td>
 					</tr>
 				<?php endforeach; ?>
 				</tbody>

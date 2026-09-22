@@ -15,7 +15,7 @@ $wp_accent = sanitize_hex_color( $settings['accent_color'] ?? '' ) ?: '#2563eb';
 			<div>
 				<span class="wp-workparcel-invoice-eyebrow"><?php esc_html_e( 'Tracking No.', 'workparcel' ); ?></span>
 				<h1><?php echo esc_html( $shipment->tracking_number ); ?></h1>
-				<div class="wp-workparcel-invoice-barcode"><?php echo \Workparcel\Barcode::bars_html( $shipment->tracking_number ); ?></div>
+				<div class="wp-workparcel-invoice-barcode"><?php echo \Workparcel\Barcode::render( $shipment->tracking_number ); ?></div>
 			</div>
 			<div class="wp-workparcel-invoice-brand">
 				<?php if ( ! empty( $settings['company_logo'] ) ) : ?>
@@ -58,8 +58,8 @@ $wp_accent = sanitize_hex_color( $settings['accent_color'] ?? '' ) ?: '#2563eb';
 					__( 'Quantity', 'workparcel' ) => $shipment->quantity,
 					__( 'Container No.', 'workparcel' ) => $shipment->container_no,
 					__( 'Assigned To', 'workparcel' ) => $shipment->driver_name,
-					__( 'Estimated Delivery', 'workparcel' ) => $shipment->estimated_delivery,
-					__( 'Created', 'workparcel' ) => $shipment->created_at,
+					__( 'Estimated Delivery', 'workparcel' ) => \Workparcel\Shipment::format_date( $shipment->estimated_delivery ),
+					__( 'Created', 'workparcel' ) => \Workparcel\Shipment::format_date( $shipment->created_at, true ),
 				);
 				foreach ( $wp_details as $wp_label => $wp_value ) :
 					if ( '' === $wp_value || null === $wp_value ) continue;
@@ -77,7 +77,7 @@ $wp_accent = sanitize_hex_color( $settings['accent_color'] ?? '' ) ?: '#2563eb';
 			<?php endif; ?>
 			<div class="wp-workparcel-invoice-fee-row">
 				<span><?php esc_html_e( 'Shipping Fee', 'workparcel' ); ?></span>
-				<strong><?php echo esc_html( number_format_i18n( (float) $shipment->shipping_fee, 2 ) ); ?></strong>
+				<strong><?php echo esc_html( \Workparcel\Shipment::format_money( $shipment->shipping_fee ) ); ?></strong>
 			</div>
 		</div>
 
@@ -117,8 +117,8 @@ $wp_accent = sanitize_hex_color( $settings['accent_color'] ?? '' ) ?: '#2563eb';
 				<tbody>
 					<?php foreach ( $events as $wp_event ) : ?>
 						<tr>
-							<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $wp_event->event_date ) ) ); ?></td>
-							<td><?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $wp_event->event_date ) ) ); ?></td>
+							<td><?php echo esc_html( \Workparcel\Shipment::format_date( $wp_event->event_date ) ); ?></td>
+							<td><?php echo esc_html( mysql2date( get_option( 'time_format' ), $wp_event->event_date ) ); ?></td>
 							<td><?php echo esc_html( $wp_event->location ?: '—' ); ?></td>
 							<td><span class="wp-workparcel-status wp-workparcel-status-<?php echo esc_attr( $wp_event->status ); ?>"><?php echo esc_html( $wp_statuses[ $wp_event->status ] ?? $wp_event->status ); ?></span></td>
 							<td><?php echo esc_html( $wp_event->description ?: '—' ); ?></td>
