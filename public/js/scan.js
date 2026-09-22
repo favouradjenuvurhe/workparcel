@@ -6,6 +6,7 @@ jQuery( function ( $ ) {
 
 	var i18n = workparcelScanFront.i18n;
 	var isStaff = !! workparcelScanFront.isStaff;
+	var nonce = workparcelScanFront.nonce;
 	var scanId = '';
 
 	var $gate = $( '#wp-workparcel-scan-gate' );
@@ -21,10 +22,38 @@ jQuery( function ( $ ) {
 	var $log = $( '#wp-workparcel-scan-log' );
 	var pendingLookup = null;
 
+	/* Everything that comes back from the server is escaped before it is put into markup. */
+	function esc( value ) {
+		return $( '<div>' ).text( value == null ? '' : String( value ) ).html().replace( /"/g, '&quot;' ).replace( /'/g, '&#39;' );
+	}
+
+	/* Page caches freeze the nonce printed in the page; ask for a fresh one. */
+	function refreshNonce() {
+		return $.post( workparcelScanFront.ajaxUrl, { action: 'workparcel_scan_nonce' } ).done( function ( res ) {
+			if ( res && res.success && res.data && res.data.nonce ) nonce = res.data.nonce;
+		} );
+	}
+
+	/* Always resolves with { success, data } — network/server errors become a visible error message instead of silence. */
+	function request( data, retried ) {
+		var d = $.Deferred();
+		$.post( workparcelScanFront.ajaxUrl, $.extend( { nonce: nonce }, data ) ).done( function ( res ) {
+			d.resolve( res );
+		} ).fail( function ( xhr ) {
+			if ( 403 === xhr.status && ! retried ) {
+				refreshNonce().always( function () {
+					request( data, true ).done( function ( res ) { d.resolve( res ); } );
+				} );
+				return;
+			}
+			d.resolve( { success: false, data: { message: i18n.requestFailed } } );
+		} );
+		return d.promise();
+	}
+
 	function post( data ) {
-		return $.post( workparcelScanFront.ajaxUrl, $.extend( {
+		return request( $.extend( {
 			action: 'workparcel_scan_action',
-			nonce: workparcelScanFront.nonce,
 			scan_id: scanId,
 			is_staff: isStaff ? 1 : 0,
 		}, data ) );
@@ -53,11 +82,17 @@ jQuery( function ( $ ) {
 		$result.html( html ).removeClass( 'is-error is-success' ).addClass( isError ? 'is-error' : 'is-success' );
 	}
 
+	function showText( text, isError ) {
+		showMessage( '<p>' + esc( text ) + '</p>', isError );
+	}
+
 	function revealApp() {
 		$gate.hide();
 		$app.prop( 'hidden', false );
 		$input.trigger( 'focus' );
 	}
+
+	refreshNonce();
 
 	if ( isStaff ) {
 		revealApp();
@@ -67,23 +102,21 @@ jQuery( function ( $ ) {
 			var candidate = $.trim( $gateInput.val() );
 			if ( ! candidate ) return;
 
-			$.post( workparcelScanFront.ajaxUrl, {
-				action: 'workparcel_scan_verify',
-				nonce: workparcelScanFront.nonce,
-				scan_id: candidate,
-			} ).done( function ( res ) {
+			request( { action: 'workparcel_scan_verify', scan_id: candidate } ).done( function ( res ) {
 				if ( res.success ) {
 					scanId = candidate.toUpperCase();
-					$whoami.html( i18n.welcome + ' <strong>' + res.data.name + '</strong> (' + res.data.type + ') <a id="wp-workparcel-scan-signout">' + i18n.signOut + '</a>' );
-					$( '#wp-workparcel-scan-signout' ).on( 'click', function () {
+					$gateError.prop( 'hidden', true );
+					$whoami.html( esc( i18n.welcome ) + ' <strong>' + esc( res.data.name ) + '</strong> (' + esc( res.data.type ) + ') <button type="button" class="wp-workparcel-scan-signout">' + esc( i18n.signOut ) + '</button>' );
+					$whoami.find( '.wp-workparcel-scan-signout' ).on( 'click', function () {
 						scanId = '';
 						$app.prop( 'hidden', true );
+						$result.empty();
 						$gate.show();
 						$gateInput.val( '' ).trigger( 'focus' );
 					} );
 					revealApp();
 				} else {
-					$gateError.text( res.data.message || i18n.invalidScanId ).prop( 'hidden', false );
+					$gateError.text( ( res.data && res.data.message ) || i18n.invalidScanId ).prop( 'hidden', false );
 					$gateInput.val( '' ).trigger( 'focus' );
 				}
 			} );
@@ -94,14 +127,14 @@ jQuery( function ( $ ) {
 		var options = '';
 		$.each( response.data.statuses, function ( key, label ) {
 			var selected = key === response.data.current_status ? ' selected' : '';
-			options += '<option value="' + key + '"' + selected + '>' + label + '</option>';
+			options += '<option value="' + esc( key ) + '"' + selected + '>' + esc( label ) + '</option>';
 		} );
 
 		var html = '<div class="wp-workparcel-scan-lookup">' +
-			'<p><strong>' + response.data.tracking_number + '</strong> — ' + i18n.currentStatus + ' <em>' + response.data.current_status_label + '</em></p>' +
-			'<label>' + i18n.newStatus + '<select id="wp-workparcel-scan-status">' + options + '</select></label>' +
-			'<label>' + i18n.location + '<input type="text" id="wp-workparcel-scan-location" placeholder="' + i18n.locationPlaceholder + '"></label>' +
-			'<button type="button" id="wp-workparcel-scan-confirm">' + i18n.updateStatus + '</button>' +
+			'<p><strong>' + esc( response.data.tracking_number ) + '</strong> — ' + esc( i18n.currentStatus ) + ' <em>' + esc( response.data.current_status_label ) + '</em></p>' +
+			'<label>' + esc( i18n.newStatus ) + '<select id="wp-workparcel-scan-status">' + options + '</select></label>' +
+			'<label>' + esc( i18n.location ) + '<input type="text" id="wp-workparcel-scan-location" placeholder="' + esc( i18n.locationPlaceholder ) + '"></label>' +
+			'<button type="button" id="wp-workparcel-scan-confirm">' + esc( i18n.updateStatus ) + '</button>' +
 			'</div>';
 		showMessage( html, false );
 		pendingLookup = { trackingNumber: response.data.tracking_number };
@@ -111,10 +144,10 @@ jQuery( function ( $ ) {
 			var location = $( '#wp-workparcel-scan-location' ).val();
 			post( { mode: 'status', tracking_number: pendingLookup.trackingNumber, status: status, location: location } ).done( function ( res ) {
 				if ( res.success ) {
-					showMessage( '<p>' + res.data.message + '</p>', false );
+					showText( res.data.message, false );
 					logEntry( res.data.tracking_number + ' → ' + $( '#wp-workparcel-scan-status option:selected' ).text(), false );
 				} else {
-					showMessage( '<p>' + res.data.message + '</p>', true );
+					showText( res.data.message, true );
 					logEntry( res.data.message, true );
 				}
 				pendingLookup = null;
@@ -125,9 +158,9 @@ jQuery( function ( $ ) {
 
 	function renderAssignPicker( response ) {
 		var html = '<div class="wp-workparcel-scan-lookup">' +
-			'<p><strong>' + response.data.tracking_number + '</strong></p>' +
-			'<label>' + i18n.assignScanId + '<input type="text" id="wp-workparcel-scan-assign-id" placeholder="' + i18n.scanIdPlaceholder + '"></label>' +
-			'<button type="button" id="wp-workparcel-scan-confirm">' + i18n.assign + '</button>' +
+			'<p><strong>' + esc( response.data.tracking_number ) + '</strong></p>' +
+			'<label>' + esc( i18n.assignScanId ) + '<input type="text" id="wp-workparcel-scan-assign-id" placeholder="' + esc( i18n.scanIdPlaceholder ) + '"></label>' +
+			'<button type="button" id="wp-workparcel-scan-confirm">' + esc( i18n.assign ) + '</button>' +
 			'</div>';
 		showMessage( html, false );
 		pendingLookup = { trackingNumber: response.data.tracking_number };
@@ -144,10 +177,10 @@ jQuery( function ( $ ) {
 			var assignScanId = $( '#wp-workparcel-scan-assign-id' ).val();
 			post( { mode: 'assign', tracking_number: pendingLookup.trackingNumber, assign_scan_id: assignScanId } ).done( function ( res ) {
 				if ( res.success ) {
-					showMessage( '<p>' + res.data.message + '</p>', false );
+					showText( res.data.message, false );
 					logEntry( res.data.message, false );
 				} else {
-					showMessage( '<p>' + res.data.message + '</p>', true );
+					showText( res.data.message, true );
 					logEntry( res.data.message, true );
 				}
 				pendingLookup = null;
@@ -166,10 +199,10 @@ jQuery( function ( $ ) {
 		if ( 'create' === mode ) {
 			post( { mode: 'create', tracking_number: tracking } ).done( function ( res ) {
 				if ( res.success ) {
-					showMessage( '<p>' + res.data.message + '</p>', false );
+					showText( res.data.message, false );
 					logEntry( res.data.tracking_number + ' — ' + i18n.created, false );
 				} else {
-					showMessage( '<p>' + res.data.message + '</p>', true );
+					showText( res.data.message, true );
 					logEntry( tracking + ' — ' + res.data.message, true );
 				}
 				refocus();
@@ -177,30 +210,20 @@ jQuery( function ( $ ) {
 			return;
 		}
 
-		if ( 'status' === mode ) {
-			post( { mode: 'status', tracking_number: tracking } ).done( function ( res ) {
+		if ( 'status' === mode || 'assign' === mode ) {
+			post( { mode: mode, tracking_number: tracking } ).done( function ( res ) {
 				if ( res.success && res.data.lookup ) {
-					renderStatusPicker( res );
+					if ( 'status' === mode ) {
+						renderStatusPicker( res );
+					} else {
+						renderAssignPicker( res );
+					}
 				} else if ( ! res.success ) {
-					showMessage( '<p>' + res.data.message + '</p>', true );
+					showText( res.data.message, true );
 					logEntry( tracking + ' — ' + res.data.message, true );
 					refocus();
 				}
 			} );
-			return;
-		}
-
-		if ( 'assign' === mode ) {
-			post( { mode: 'assign', tracking_number: tracking } ).done( function ( res ) {
-				if ( res.success && res.data.lookup ) {
-					renderAssignPicker( res );
-				} else if ( ! res.success ) {
-					showMessage( '<p>' + res.data.message + '</p>', true );
-					logEntry( tracking + ' — ' + res.data.message, true );
-					refocus();
-				}
-			} );
-			return;
 		}
 	} );
 
