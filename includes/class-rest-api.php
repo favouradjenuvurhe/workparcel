@@ -144,7 +144,7 @@ class RestApi {
 		$status = sanitize_key( (string) $req->get_param( 'status' ) );
 		$location = (string) $req->get_param( 'location' );
 		$note = (string) $req->get_param( 'note' );
-		$result = Shipment::update_status( $id, $status, $location, $note );
+		$result = Shipment::update_status( $id, $status, $location, $note, '', wp_get_current_user()->display_name );
 		if ( is_wp_error( $result ) ) return $result;
 		return rest_ensure_response( self::shipment_response( Shipment::get( $id ) ) );
 	}
@@ -169,7 +169,7 @@ class RestApi {
 			'origin' => $shipment->origin,
 			'destination' => $shipment->destination,
 			'estimated_delivery' => $shipment->estimated_delivery,
-			'events' => Tracking::events( $shipment->id ),
+			'events' => Tracking::public_events( $shipment->id ),
 		) );
 	}
 
@@ -199,7 +199,7 @@ class RestApi {
 	private static function sanitize_shipment_params( \WP_REST_Request $req ) {
 		$fields = array(
 			'tracking_number', 'reference', 'title', 'sender_name', 'sender_phone', 'origin',
-			'destination', 'description', 'parcel_type', 'status', 'estimated_delivery', 'container_no',
+			'destination', 'parcel_type', 'status', 'estimated_delivery', 'container_no', 'driver_name',
 		);
 		$data = array();
 		foreach ( $fields as $field ) {
@@ -208,7 +208,7 @@ class RestApi {
 		foreach ( array( 'sender_email', 'receiver_email' ) as $field ) {
 			if ( null !== $req->get_param( $field ) ) $data[ $field ] = sanitize_email( (string) $req->get_param( $field ) );
 		}
-		foreach ( array( 'sender_address', 'receiver_address' ) as $field ) {
+		foreach ( array( 'sender_address', 'receiver_address', 'description' ) as $field ) {
 			if ( null !== $req->get_param( $field ) ) $data[ $field ] = sanitize_textarea_field( (string) $req->get_param( $field ) );
 		}
 		if ( null !== $req->get_param( 'receiver_name' ) ) $data['receiver_name'] = sanitize_text_field( (string) $req->get_param( 'receiver_name' ) );
@@ -217,6 +217,9 @@ class RestApi {
 		if ( null !== $req->get_param( 'quantity' ) ) $data['quantity'] = (int) $req->get_param( 'quantity' );
 		if ( null !== $req->get_param( 'shipping_fee' ) ) $data['shipping_fee'] = (float) $req->get_param( 'shipping_fee' );
 		if ( null !== $req->get_param( 'customer_id' ) ) $data['customer_id'] = (int) $req->get_param( 'customer_id' );
+		foreach ( array( 'photo', 'pod_signature', 'pod_photo' ) as $field ) {
+			if ( null !== $req->get_param( $field ) ) $data[ $field ] = esc_url_raw( (string) $req->get_param( $field ) );
+		}
 		return $data;
 	}
 }

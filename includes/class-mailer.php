@@ -17,11 +17,19 @@ class Mailer {
 	}
 
 	/**
-	 * Detect whether an SMTP sender is likely configured. Checked in order of
+	 * Detect whether an SMTP sender is likely configured (see also: the "Send notifications anyway" setting). Checked in order of
 	 * reliability: known SMTP plugin classes, an SMTP_HOST constant, then a
 	 * generic phpmailer_init listener as a catch-all for anything else.
 	 */
+	/** True when notifications may be sent: an SMTP sender was detected, or the site owner switched "Send notifications anyway" on. */
 	public static function smtp_configured() {
+		$settings = Settings::get();
+		if ( ! empty( $settings['email_force_send'] ) ) return true;
+		return self::smtp_detected();
+	}
+
+	/** Whether a known SMTP plugin, SMTP constant or PHPMailer listener is present. */
+	public static function smtp_detected() {
 		$known_plugin_classes = array(
 			'WPMailSMTP\\Core',                               // WP Mail SMTP
 			'EasyWPSMTP\\Core',                                // Easy WP SMTP
@@ -102,13 +110,15 @@ class Mailer {
 		$statuses     = Shipment::statuses();
 		$status_label = $statuses[ $shipment->status ] ?? $shipment->status;
 		$accent       = sanitize_hex_color( $settings['accent_color'] ?? '' ) ?: '#2563eb';
+		$accent_text  = Settings::accent_text_color( $accent );
+		$badge_bg     = '#ffffff' === $accent_text ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.10)';
 		$company      = $settings['company_name'] ?: get_bloginfo( 'name' );
 		$events       = array_slice( Tracking::events( $shipment->id ), 0, 5 );
 
 		$track_url = '';
 		if ( ! empty( $settings['tracking_page'] ) ) {
 			$permalink = get_permalink( (int) $settings['tracking_page'] );
-			if ( $permalink ) $track_url = add_query_arg( 'workparcel_tracking', $shipment->tracking_number, $permalink );
+			if ( $permalink ) $track_url = add_query_arg( 'workparcel_tracking', rawurlencode( $shipment->tracking_number ), $permalink );
 		}
 
 		ob_start();
@@ -127,10 +137,10 @@ class Mailer {
 						<?php if ( ! empty( $settings['company_logo'] ) ) : ?>
 							<img src="<?php echo esc_url( $settings['company_logo'] ); ?>" alt="<?php echo esc_attr( $company ); ?>" height="32" style="display:block;margin-bottom:8px;max-height:32px;">
 						<?php endif; ?>
-						<span style="color:#ffffff;font-size:19px;font-weight:bold;font-family:Arial,Helvetica,sans-serif;"><?php echo esc_html( $company ); ?></span>
+						<span style="color:<?php echo esc_attr( $accent_text ); ?>;font-size:19px;font-weight:bold;font-family:Arial,Helvetica,sans-serif;"><?php echo esc_html( $company ); ?></span>
 					</td>
 					<td style="vertical-align:middle;text-align:right;">
-						<span style="display:inline-block;background:rgba(255,255,255,0.18);color:#ffffff;font-size:12px;font-weight:bold;padding:6px 12px;border-radius:999px;font-family:Arial,Helvetica,sans-serif;"><?php echo esc_html( $status_label ); ?></span>
+						<span style="display:inline-block;background:<?php echo esc_attr( $badge_bg ); ?>;color:<?php echo esc_attr( $accent_text ); ?>;font-size:12px;font-weight:bold;padding:6px 12px;border-radius:999px;font-family:Arial,Helvetica,sans-serif;"><?php echo esc_html( $status_label ); ?></span>
 					</td>
 				</tr>
 			</table>
@@ -186,7 +196,7 @@ class Mailer {
 				<?php endif; ?>
 				<?php if ( $shipment->estimated_delivery ) : ?>
 				<tr>
-					<td colspan="2" style="vertical-align:top;padding-bottom:16px;"><strong><?php esc_html_e( 'Estimated delivery', 'workparcel' ); ?></strong><br><?php echo esc_html( $shipment->estimated_delivery ); ?></td>
+					<td colspan="2" style="vertical-align:top;padding-bottom:16px;"><strong><?php esc_html_e( 'Estimated delivery', 'workparcel' ); ?></strong><br><?php echo esc_html( Shipment::format_date( $shipment->estimated_delivery ) ); ?></td>
 				</tr>
 				<?php endif; ?>
 			</table>
@@ -194,7 +204,7 @@ class Mailer {
 			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e2e8f0;padding-top:14px;font-family:Arial,Helvetica,sans-serif;">
 				<tr>
 					<td style="font-size:14px;color:#64748b;"><?php esc_html_e( 'Shipping Fee', 'workparcel' ); ?></td>
-					<td style="font-size:16px;color:#0f172a;font-weight:bold;text-align:right;"><?php echo esc_html( number_format_i18n( (float) $shipment->shipping_fee, 2 ) ); ?></td>
+					<td style="font-size:16px;color:#0f172a;font-weight:bold;text-align:right;"><?php echo esc_html( Shipment::format_money( $shipment->shipping_fee ) ); ?></td>
 				</tr>
 			</table>
 
@@ -228,7 +238,7 @@ class Mailer {
 					<td style="font-size:13px;color:#334155;padding:6px 0;border-top:1px solid #f1f5f9;">
 						<strong><?php echo esc_html( $statuses[ $event->status ] ?? $event->status ); ?></strong>
 						<?php if ( $event->location ) : ?> — <?php echo esc_html( $event->location ); ?><?php endif; ?>
-						<span style="color:#94a3b8;"> · <?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $event->event_date ) ) ); ?></span>
+						<span style="color:#94a3b8;"> · <?php echo esc_html( Shipment::format_date( $event->event_date ) ); ?></span>
 					</td>
 				</tr>
 				<?php endforeach; ?>
@@ -238,7 +248,7 @@ class Mailer {
 			<?php if ( $track_url ) : ?>
 			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;">
 				<tr><td align="center">
-					<a href="<?php echo esc_url( $track_url ); ?>" style="display:inline-block;background:<?php echo esc_attr( $accent ); ?>;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:8px;font-weight:bold;font-family:Arial,Helvetica,sans-serif;font-size:14px;">
+					<a href="<?php echo esc_url( $track_url ); ?>" style="display:inline-block;background:<?php echo esc_attr( $accent ); ?>;color:<?php echo esc_attr( $accent_text ); ?>;text-decoration:none;padding:12px 26px;border-radius:8px;font-weight:bold;font-family:Arial,Helvetica,sans-serif;font-size:14px;">
 						<?php esc_html_e( 'Track Shipment', 'workparcel' ); ?>
 					</a>
 				</td></tr>

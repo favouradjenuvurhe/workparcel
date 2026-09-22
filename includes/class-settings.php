@@ -23,12 +23,37 @@ class Settings {
 			'notify_admin' => 1,
 			'enable_scan_page' => 0,
 			'enable_rest_api' => 1,
+			'email_force_send' => 0,
+			'currency' => '',
 			'delete_data' => 0,
 		) );
 	}
 
+	/**
+	 * Black or white, whichever is readable on top of the given accent colour
+	 * (a light accent such as yellow would otherwise get unreadable white button text).
+	 */
+	public static function accent_text_color( $hex ) {
+		$hex = ltrim( (string) $hex, '#' );
+		if ( 3 === strlen( $hex ) ) $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+		if ( ! preg_match( '/^[0-9a-f]{6}$/i', $hex ) ) return '#ffffff';
+		$luma = ( 0.299 * hexdec( substr( $hex, 0, 2 ) ) + 0.587 * hexdec( substr( $hex, 2, 2 ) ) + 0.114 * hexdec( substr( $hex, 4, 2 ) ) ) / 255;
+		return $luma > 0.62 ? '#111827' : '#ffffff';
+	}
+
+	/** CSS custom properties for the accent colour, ready to drop into an inline style rule. */
+	public static function css_vars( $settings = null ) {
+		$settings = $settings ?: self::get();
+		$accent = sanitize_hex_color( $settings['accent_color'] ?? '' ) ?: '#2563eb';
+		return '--wp-workparcel-accent: ' . $accent . '; --wp-workparcel-accent-text: ' . self::accent_text_color( $accent ) . ';';
+	}
+
 	public static function register() {
 		register_setting( 'workparcel_settings', 'workparcel_settings', array( 'sanitize_callback' => array( __CLASS__, 'sanitize' ) ) );
+		// options.php requires manage_options by default, which would lock out a custom role that only has workparcel_manage_settings.
+		add_filter( 'option_page_capability_workparcel_settings', function () {
+			return 'workparcel_manage_settings';
+		} );
 	}
 
 	public static function sanitize( $input ) {
@@ -52,6 +77,8 @@ class Settings {
 			'notify_admin' => empty( $input['notify_admin'] ) ? 0 : 1,
 			'enable_scan_page' => empty( $input['enable_scan_page'] ) ? 0 : 1,
 			'enable_rest_api' => empty( $input['enable_rest_api'] ) ? 0 : 1,
+			'email_force_send' => empty( $input['email_force_send'] ) ? 0 : 1,
+			'currency' => substr( sanitize_text_field( $input['currency'] ?? '' ), 0, 10 ),
 			'delete_data' => empty( $input['delete_data'] ) ? 0 : 1,
 		);
 	}
@@ -77,7 +104,7 @@ class Settings {
 					<input type="radio" name="wp_wc_tab" id="wp-wc-tab-scanapi" class="wp-workparcel-tab-radio">
 					<input type="radio" name="wp_wc_tab" id="wp-wc-tab-advanced" class="wp-workparcel-tab-radio">
 
-					<div class="wp-workparcel-tabs" role="tablist">
+					<div class="wp-workparcel-tabs">
 						<label for="wp-wc-tab-general" class="wp-workparcel-tab"><?php esc_html_e( 'General', 'workparcel' ); ?></label>
 						<label for="wp-wc-tab-tracking" class="wp-workparcel-tab"><?php esc_html_e( 'Tracking', 'workparcel' ); ?></label>
 						<label for="wp-wc-tab-appearance" class="wp-workparcel-tab"><?php esc_html_e( 'Appearance', 'workparcel' ); ?></label>
@@ -145,6 +172,24 @@ class Settings {
 								<td><input type="text" id="workparcel_prefix" name="workparcel_settings[tracking_prefix]" value="<?php echo esc_attr( $s['tracking_prefix'] ); ?>" class="regular-text"></td>
 							</tr>
 							<tr>
+								<th><label for="workparcel_default_status"><?php esc_html_e( 'Default status', 'workparcel' ); ?></label></th>
+								<td>
+									<select id="workparcel_default_status" name="workparcel_settings[default_status]">
+										<?php foreach ( Shipment::statuses() as $status_key => $status_label ) : ?>
+											<option value="<?php echo esc_attr( $status_key ); ?>" <?php selected( $s['default_status'], $status_key ); ?>><?php echo esc_html( $status_label ); ?></option>
+										<?php endforeach; ?>
+									</select>
+									<p class="description"><?php esc_html_e( 'The status new shipments start with (Add Shipment form, Scan page and REST API).', 'workparcel' ); ?></p>
+								</td>
+							</tr>
+							<tr>
+								<th><label for="workparcel_currency"><?php esc_html_e( 'Currency', 'workparcel' ); ?></label></th>
+								<td>
+									<input type="text" id="workparcel_currency" name="workparcel_settings[currency]" value="<?php echo esc_attr( $s['currency'] ); ?>" class="small-text" maxlength="10" placeholder="$">
+									<p class="description"><?php esc_html_e( 'Symbol or code shown next to the shipping fee on invoices and emails, e.g. $, €, £ or USD. Leave empty to show the number only.', 'workparcel' ); ?></p>
+								</td>
+							</tr>
+							<tr>
 								<th><label for="workparcel_title"><?php esc_html_e( 'Tracking page title', 'workparcel' ); ?></label></th>
 								<td><input type="text" id="workparcel_title" name="workparcel_settings[tracking_title]" value="<?php echo esc_attr( $s['tracking_title'] ); ?>" class="regular-text"></td>
 							</tr>
@@ -168,7 +213,7 @@ class Settings {
 					</div>
 
 					<div class="wp-workparcel-panel wp-workparcel-tab-panel" id="wp-workparcel-panel-notifications">
-						<p class="description"><?php esc_html_e( 'Emails are only sent when an SMTP sender is detected (a plugin like WP Mail SMTP, FluentSMTP, Easy WP SMTP, Post SMTP, or a configured SMTP constant). Otherwise notifications are silently skipped.', 'workparcel' ); ?></p>
+						<p class="description"><?php esc_html_e( 'By default emails are only sent when an SMTP sender is detected (a plugin like WP Mail SMTP, FluentSMTP, Easy WP SMTP, Post SMTP, or a configured SMTP constant), because the default WordPress mail transport is often dropped by hosts. You can override this below.', 'workparcel' ); ?></p>
 						<table class="form-table" role="presentation">
 							<tr>
 								<th><?php esc_html_e( 'Notify sender', 'workparcel' ); ?></th>
@@ -181,6 +226,19 @@ class Settings {
 							<tr>
 								<th><?php esc_html_e( 'Notify admin', 'workparcel' ); ?></th>
 								<td><label><input type="checkbox" name="workparcel_settings[notify_admin]" value="1" <?php checked( $s['notify_admin'], 1 ); ?>> <?php esc_html_e( 'Email the site admin when a shipment is created or its status changes.', 'workparcel' ); ?></label></td>
+							</tr>
+							<tr>
+								<th><?php esc_html_e( 'Sending method', 'workparcel' ); ?></th>
+								<td>
+									<p>
+										<?php if ( Mailer::smtp_detected() ) : ?>
+											<strong style="color:#166534;"><?php esc_html_e( 'SMTP sender detected — notifications are enabled.', 'workparcel' ); ?></strong>
+										<?php else : ?>
+											<strong style="color:#92400e;"><?php esc_html_e( 'No SMTP sender detected.', 'workparcel' ); ?></strong>
+										<?php endif; ?>
+									</p>
+									<label><input type="checkbox" name="workparcel_settings[email_force_send]" value="1" <?php checked( $s['email_force_send'], 1 ); ?>> <?php esc_html_e( 'Send notifications anyway (use this if your host or mail plugin delivers email reliably but was not detected, e.g. API-based mailers).', 'workparcel' ); ?></label>
+								</td>
 							</tr>
 						</table>
 					</div>

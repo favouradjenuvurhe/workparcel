@@ -21,14 +21,17 @@ class Shortcodes {
 
 		if ( isset( $_GET['workparcel_tracking'] ) ) {
 			$tracking = sanitize_text_field( wp_unslash( $_GET['workparcel_tracking'] ) );
-			if ( $tracking ) $shipment = Shipment::find_by_tracking( $tracking );
+			if ( $tracking ) {
+				$shipment = Shipment::find_by_tracking( $tracking );
+				// A looked-up result must never be served from a page cache to the next visitor.
+				if ( ! defined( 'DONOTCACHEPAGE' ) ) define( 'DONOTCACHEPAGE', true );
+			}
 		}
 
 		ob_start();
 		wp_enqueue_style( 'workparcel-public', WORKPARCEL_URL . 'public/css/public.css', array(), WORKPARCEL_VERSION );
 		wp_enqueue_script( 'workparcel-public', WORKPARCEL_URL . 'public/js/public.js', array(), WORKPARCEL_VERSION, true );
-		$accent = sanitize_hex_color( $settings['accent_color'] ?? '' ) ?: '#2563eb';
-		wp_add_inline_style( 'workparcel-public', '.wp-workparcel-tracker{--wp-workparcel-accent: ' . $accent . ';}' );
+		wp_add_inline_style( 'workparcel-public', '.wp-workparcel-tracker{' . Settings::css_vars( $settings ) . '}' );
 		?>
 		<div class="wp-workparcel-tracker">
 			<div class="wp-workparcel-card wp-workparcel-search-card">
@@ -60,12 +63,13 @@ class Shortcodes {
 				$steps         = self::stepper_statuses();
 				$current_index = array_search( $shipment->status, $steps, true );
 				if ( 'delivered' === $shipment->status ) $current_index = count( $steps ) - 1;
+				if ( false === $current_index ) $current_index = -1; // custom status that is not on the stepper
 
 				$details = array(
 					__( 'Origin', 'workparcel' )      => $shipment->origin,
 					__( 'Destination', 'workparcel' ) => $shipment->destination,
 					__( 'Receiver', 'workparcel' )    => $shipment->receiver_name,
-					__( 'Estimated delivery', 'workparcel' ) => $shipment->estimated_delivery,
+					__( 'Estimated delivery', 'workparcel' ) => Shipment::format_date( $shipment->estimated_delivery ),
 					__( 'Parcel type', 'workparcel' ) => $shipment->parcel_type,
 					__( 'Weight', 'workparcel' )      => ( $shipment->weight > 0 ) ? $shipment->weight : '',
 					__( 'Quantity', 'workparcel' )    => ( $shipment->quantity > 0 ) ? $shipment->quantity : '',
@@ -94,7 +98,7 @@ class Shortcodes {
 								?>
 								<div class="wp-workparcel-step wp-workparcel-step-<?php echo esc_attr( $state ); ?>" role="listitem">
 									<span class="wp-workparcel-step-dot" aria-hidden="true"></span>
-									<span class="wp-workparcel-step-label"><?php echo esc_html( $statuses[ $step_key ] ); ?></span>
+									<span class="wp-workparcel-step-label"><?php echo esc_html( $statuses[ $step_key ] ?? $step_key ); ?></span>
 								</div>
 							<?php endforeach; ?>
 						</div>
@@ -116,7 +120,7 @@ class Shortcodes {
 										<strong><?php echo esc_html( $statuses[ $event->status ] ?? $event->status ); ?></strong>
 										<?php if ( $event->location ) : ?><span class="wp-workparcel-location"><?php echo esc_html( $event->location ); ?></span><?php endif; ?>
 										<?php if ( $event->description ) : ?><p><?php echo esc_html( $event->description ); ?></p><?php endif; ?>
-										<small><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $event->event_date ) ) ); ?></small>
+										<small><?php echo esc_html( Shipment::format_date( $event->event_date, true ) ); ?></small>
 									</div>
 								</div>
 							<?php endforeach; ?>

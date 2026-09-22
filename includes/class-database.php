@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Database {
 
 	/** Bump ONLY when the table schema itself changes, independent of the plugin version. */
-	const DB_VERSION = '1.1.0';
+	const DB_VERSION = '1.1.1';
 
 	public static function activate() {
 		self::install_tables();
@@ -26,7 +26,8 @@ class Database {
 	}
 
 	/**
-	 * Runs on every admin load and re-applies dbDelta if the stored schema version is behind.
+	 * Runs early on every request (see Plugin::init) and re-applies dbDelta if the stored schema version is behind,
+	 * so REST/AJAX requests never hit a half-upgraded schema right after a plugin update.
 	 * dbDelta only ever adds/modifies columns to match the SQL — it never drops data — so this
 	 * is safe to run repeatedly and is how existing installs pick up new columns/capabilities
 	 * after an update, without needing to deactivate/reactivate the plugin.
@@ -90,6 +91,7 @@ class Database {
 			status varchar(40) NOT NULL DEFAULT 'pending',
 			location varchar(190) NOT NULL DEFAULT '',
 			description text NOT NULL,
+			actor varchar(190) NOT NULL DEFAULT '',
 			event_date datetime NOT NULL,
 			created_at datetime NOT NULL,
 			PRIMARY KEY (id),
@@ -129,6 +131,7 @@ class Database {
 			$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}workparcel_customers" );
 			delete_option( 'workparcel_settings' );
 			delete_option( 'workparcel_db_version' );
+			Capabilities::remove();
 		}
 	}
 }

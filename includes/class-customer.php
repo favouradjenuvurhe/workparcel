@@ -66,6 +66,10 @@ class Customer {
 			$where .= ' AND type = %s';
 			$params[] = $args['type'];
 		}
+		if ( ! empty( $args['status'] ) && in_array( $args['status'], array( 'active', 'inactive' ), true ) ) {
+			$where .= ' AND status = %s';
+			$params[] = $args['status'];
+		}
 		if ( ! empty( $args['search'] ) ) {
 			$search = '%' . $wpdb->esc_like( sanitize_text_field( $args['search'] ) ) . '%';
 			$where .= ' AND (name LIKE %s OR scan_id LIKE %s OR email LIKE %s OR phone LIKE %s)';
@@ -96,6 +100,8 @@ class Customer {
 			'status' => in_array( $data['status'] ?? 'active', array( 'active', 'inactive' ), true ) ? $data['status'] : 'active',
 			'updated_at' => current_time( 'mysql' ),
 		);
+		if ( '' === $row['name'] ) return new \WP_Error( 'name_required', __( 'A name is required.', 'workparcel' ) );
+
 		$formats = array( '%s','%s','%s','%s','%s','%s','%s' );
 
 		if ( $id ) {
@@ -118,6 +124,9 @@ class Customer {
 
 	public static function delete( $id ) {
 		global $wpdb;
-		return $wpdb->delete( $wpdb->prefix . 'workparcel_customers', array( 'id' => absint( $id ) ), array( '%d' ) );
+		$id = absint( $id );
+		// Un-assign their shipments (the driver_name text stays for history) so nothing points at a customer that no longer exists.
+		$wpdb->update( $wpdb->prefix . 'workparcel_shipments', array( 'customer_id' => 0 ), array( 'customer_id' => $id ), array( '%d' ), array( '%d' ) );
+		return $wpdb->delete( $wpdb->prefix . 'workparcel_customers', array( 'id' => $id ), array( '%d' ) );
 	}
 }

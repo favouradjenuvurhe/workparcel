@@ -28,7 +28,7 @@ class WooCommerceIntegration {
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_order_meta_box' ) );
 		add_action( 'woocommerce_process_shop_order_meta', array( __CLASS__, 'save_order_meta_box' ) );
 		add_action( 'woocommerce_order_details_after_order_table', array( __CLASS__, 'render_customer_tracking' ) );
-		add_action( 'woocommerce_email_after_order_table', array( __CLASS__, 'render_customer_tracking_email' ) );
+		add_action( 'woocommerce_email_after_order_table', array( __CLASS__, 'render_customer_tracking_email' ), 10, 4 );
 	}
 
 	/** Works out the correct screen ID whether the store uses HPOS or legacy post-based orders. */
@@ -87,7 +87,7 @@ class WooCommerceIntegration {
 		$order = wc_get_order( $order_id );
 		if ( ! $order ) return;
 
-		$tracking_number = isset( $_POST['workparcel_tracking_number'] ) ? sanitize_text_field( wp_unslash( $_POST['workparcel_tracking_number'] ) ) : '';
+		$tracking_number = isset( $_POST['workparcel_tracking_number'] ) ? strtoupper( trim( sanitize_text_field( wp_unslash( $_POST['workparcel_tracking_number'] ) ) ) ) : '';
 		$order->update_meta_data( '_workparcel_tracking_number', $tracking_number );
 		$order->save();
 	}
@@ -96,11 +96,11 @@ class WooCommerceIntegration {
 		self::output_tracking_block( $order );
 	}
 
-	public static function render_customer_tracking_email( $order ) {
-		self::output_tracking_block( $order );
+	public static function render_customer_tracking_email( $order, $sent_to_admin = false, $plain_text = false ) {
+		self::output_tracking_block( $order, (bool) $plain_text );
 	}
 
-	private static function output_tracking_block( $order ) {
+	private static function output_tracking_block( $order, $plain_text = false ) {
 		if ( ! $order instanceof \WC_Order ) return;
 
 		$tracking_number = $order->get_meta( '_workparcel_tracking_number' );
@@ -113,7 +113,18 @@ class WooCommerceIntegration {
 		$settings = Settings::get();
 		$track_url = '';
 		if ( ! empty( $settings['tracking_page'] ) ) {
-			$track_url = add_query_arg( 'workparcel_tracking', $tracking_number, get_permalink( (int) $settings['tracking_page'] ) );
+			$permalink = get_permalink( (int) $settings['tracking_page'] );
+			// If the page was deleted get_permalink() is false, and add_query_arg() would then silently link to the current URL.
+			if ( $permalink ) $track_url = add_query_arg( 'workparcel_tracking', rawurlencode( $tracking_number ), $permalink );
+		}
+
+		// Plain-text order emails must not receive HTML markup.
+		if ( $plain_text ) {
+			echo "\n" . esc_html__( 'Shipment Tracking', 'workparcel' ) . "\n";
+			echo esc_html( sprintf( __( 'Tracking number: %s', 'workparcel' ), $tracking_number ) ) . "\n";
+			echo esc_html( sprintf( __( 'Status: %s', 'workparcel' ), $label ) ) . "\n";
+			if ( $track_url ) echo esc_url_raw( $track_url ) . "\n";
+			return;
 		}
 		?>
 		<h2><?php esc_html_e( 'Shipment Tracking', 'workparcel' ); ?></h2>

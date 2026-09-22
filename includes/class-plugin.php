@@ -12,8 +12,11 @@ class Plugin {
 	}
 
 	public function init() {
-		add_action( 'admin_init', array( 'Workparcel\\Database', 'maybe_upgrade' ) );
+		// Run the schema upgrade early on every request (not just in wp-admin) so REST/AJAX never see a half-upgraded database after an update.
+		Database::maybe_upgrade();
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
+		add_filter( 'parent_file', array( $this, 'menu_parent_file' ) );
+		add_filter( 'submenu_file', array( $this, 'menu_submenu_file' ) );
 		add_action( 'admin_init', array( 'Workparcel\\Settings', 'register' ) );
 		add_action( 'admin_post_workparcel_save_shipment', array( $this, 'save_shipment' ) );
 		add_action( 'admin_post_workparcel_delete_shipment', array( $this, 'delete_shipment' ) );
@@ -37,11 +40,29 @@ class Plugin {
 		add_submenu_page( null, 'Add Customer', 'Add Customer', 'workparcel_manage_customers', 'workparcel-customer-edit', array( $this, 'customer_edit' ) );
 	}
 
+	/**
+	 * The invoice and add/edit-customer screens are hidden pages, which makes WordPress collapse the Workparcel menu
+	 * while you are on them. These two filters keep the menu open and the right item highlighted.
+	 */
+	public function menu_parent_file( $parent_file ) {
+		global $plugin_page;
+		if ( in_array( $plugin_page, array( 'workparcel-invoice', 'workparcel-customer-edit' ), true ) ) return 'workparcel';
+		return $parent_file;
+	}
+
+	public function menu_submenu_file( $submenu_file ) {
+		global $plugin_page;
+		if ( 'workparcel-invoice' === $plugin_page ) return 'workparcel-shipments';
+		if ( 'workparcel-customer-edit' === $plugin_page ) return 'workparcel-customers';
+		if ( 'workparcel-add' === $plugin_page && ! empty( $_GET['id'] ) ) return 'workparcel-shipments';
+		return $submenu_file;
+	}
+
 	public function admin_assets( $hook ) {
 		if ( strpos( $hook, 'workparcel' ) === false ) return;
 		wp_enqueue_style( 'workparcel-admin', WORKPARCEL_URL . 'admin/css/admin.css', array(), WORKPARCEL_VERSION );
-		$accent = sanitize_hex_color( Settings::get()['accent_color'] ) ?: '#2563eb';
-		wp_add_inline_style( 'workparcel-admin', ':root{--wp-workparcel-accent: ' . $accent . ';}' );
+		$css_vars = Settings::css_vars();
+		wp_add_inline_style( 'workparcel-admin', ':root{' . $css_vars . '}' );
 		wp_enqueue_script( 'workparcel-admin', WORKPARCEL_URL . 'admin/js/admin.js', array(), WORKPARCEL_VERSION, true );
 
 		if ( strpos( $hook, 'workparcel-settings' ) !== false ) {
@@ -58,7 +79,7 @@ class Plugin {
 
 		if ( strpos( $hook, 'workparcel-invoice' ) !== false ) {
 			wp_enqueue_style( 'workparcel-invoice', WORKPARCEL_URL . 'admin/css/invoice.css', array(), WORKPARCEL_VERSION );
-			wp_add_inline_style( 'workparcel-invoice', '.wp-workparcel-invoice{--wp-workparcel-accent: ' . $accent . ';}' );
+			wp_add_inline_style( 'workparcel-invoice', '.wp-workparcel-invoice{' . $css_vars . '}' );
 		}
 	}
 
@@ -85,10 +106,11 @@ class Plugin {
 		$this->guard( 'workparcel_view_shipments' );
 		global $wpdb;
 		$table = $wpdb->prefix . 'workparcel_shipments';
-		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $table" );
-		$stats = array();
-		foreach ( Shipment::statuses() as $key => $label ) {
-			$stats[ $key ] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", $key ) );
+		$stats = array_fill_keys( array_keys( Shipment::statuses() ), 0 );
+		$total = 0;
+		foreach ( (array) $wpdb->get_results( "SELECT status, COUNT(*) AS c FROM $table GROUP BY status" ) as $row ) {
+			$total += (int) $row->c;
+			if ( isset( $stats[ $row->status ] ) ) $stats[ $row->status ] = (int) $row->c;
 		}
 		$recent = Shipment::all( array( 'page' => 1, 'per_page' => 5 ) );
 		include WORKPARCEL_DIR . 'admin/views/dashboard.php';
@@ -110,7 +132,19 @@ class Plugin {
 		$this->guard( $id ? 'workparcel_edit_shipments' : 'workparcel_create_shipments' );
 		$shipment = $id ? Shipment::get( $id ) : null;
 		$events = $id ? Tracking::events( $id ) : array();
-		$customers = Customer::all( array( 'per_page' => 100 ) )['items'];
+		$customers = Customer::all( array( 'per_page' => 100, 'status' => 'active' ) )['items'];
+		// Never drop the current assignee from the list (they may be inactive or beyond the first 100),
+		// otherwise saving the form would silently un-assign the shipment.
+		if ( $shipment && (int) $shipment->customer_id ) {
+			$listed = false;
+			foreach ( $customers as $c ) {
+				if ( (int) $c->id === (int) $shipment->customer_id ) { $listed = true; break; }
+			}
+			if ( ! $listed ) {
+				$current = Customer::get( (int) $shipment->customer_id );
+				if ( $current ) array_unshift( $customers, $current );
+			}
+		}
 		include WORKPARCEL_DIR . 'admin/views/shipment-edit.php';
 	}
 
@@ -146,7 +180,7 @@ class Plugin {
 			'pod_photo' => isset( $_POST['pod_photo'] ) ? esc_url_raw( wp_unslash( $_POST['pod_photo'] ) ) : '',
 		);
 		$result = Shipment::save( $data, $id );
-		if ( is_wp_error( $result ) ) wp_die( esc_html( $result->get_error_message() ) );
+		if ( is_wp_error( $result ) ) wp_die( esc_html( $result->get_error_message() ), '', array( 'back_link' => true ) );
 		wp_safe_redirect( admin_url( 'admin.php?page=workparcel-shipments&message=saved' ) );
 		exit;
 	}
@@ -168,7 +202,8 @@ class Plugin {
 		$location = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
 		$description = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
 		$event_date = isset( $_POST['event_date'] ) ? sanitize_text_field( wp_unslash( $_POST['event_date'] ) ) : '';
-		Shipment::update_status( $id, $status, $location, $description, $event_date );
+		$result = Shipment::update_status( $id, $status, $location, $description, $event_date, wp_get_current_user()->display_name );
+		if ( is_wp_error( $result ) ) wp_die( esc_html( $result->get_error_message() ), '', array( 'back_link' => true ) );
 		wp_safe_redirect( admin_url( 'admin.php?page=workparcel-add&id=' . $id . '&message=event_added' ) );
 		exit;
 	}
@@ -214,7 +249,7 @@ class Plugin {
 			'status' => isset( $_POST['status'] ) ? sanitize_key( $_POST['status'] ) : 'active',
 		);
 		$result = Customer::save( $data, $id );
-		if ( is_wp_error( $result ) ) wp_die( esc_html( $result->get_error_message() ) );
+		if ( is_wp_error( $result ) ) wp_die( esc_html( $result->get_error_message() ), '', array( 'back_link' => true ) );
 		wp_safe_redirect( admin_url( 'admin.php?page=workparcel-customers&message=saved' ) );
 		exit;
 	}
