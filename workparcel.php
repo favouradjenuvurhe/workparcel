@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Workparcel
- * Description: Shipment management and a branded parcel tracking page for WordPress, with WooCommerce order integration and email notifications.
- * Version: 1.1.1
+ * Description: Manage shipments and track parcels from WordPress with branded tracking pages, WooCommerce integration, barcode scanning, and a REST API.
+ * Version: 1.1.2
  * Author: faav11_
  * License: GPL-2.0-or-later
  * Text Domain: workparcel
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WORKPARCEL_VERSION', '1.1.1' );
+define( 'WORKPARCEL_VERSION', '1.1.2' );
 define( 'WORKPARCEL_FILE', __FILE__ );
 define( 'WORKPARCEL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WORKPARCEL_URL', plugin_dir_url( __FILE__ ) );

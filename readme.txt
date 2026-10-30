@@ -1,126 +1,140 @@
 === Workparcel ===
 Contributors: favouradjenuvurhe
-Tags: shipment tracking, parcel tracking, order tracking, delivery, woocommerce
+Tags: shipment tracking, parcel tracking, woocommerce, courier management, delivery management
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Track parcels and shipments on WordPress with a branded tracking page, a clean shipment dashboard, and WooCommerce order integration.
+Manage shipments and track parcels directly from WordPress. Give customers a branded tracking page, connect shipments to WooCommerce orders, and manage deliveries from one dashboard.
 
 == Description ==
 
-**Workparcel** turns WordPress into a full shipment management and parcel tracking system — for a courier business, a freight forwarder, a fulfillment team, or any WooCommerce store that ships physical products.
+**Workparcel** is a self-hosted shipment management and parcel tracking plugin for WordPress. It helps courier companies, delivery businesses, freight teams, and online stores create shipments, manage delivery progress, and let customers track parcels on their own website.
 
-Create shipments, generate tracking numbers automatically, log every status change as a tracking event, and give your customers a live, branded tracking page — right on your own site, with your own domain and your own logo. No third-party tracking service, no external subscription, no iframe.
+Create a shipment, generate a tracking number, record status updates, and share the tracking number with the customer. Customers can enter it on your branded tracking page to see the shipment's current status and tracking history — without being sent to a third-party tracking website.
 
-= Why Workparcel =
+Workparcel keeps shipment records in your WordPress database, so you manage the tracking experience on your own site and under your own domain.
 
-* **Built for shipping and logistics businesses** — manage every shipment from a professional, purpose-built dashboard instead of spreadsheets.
-* **Branded, not generic** — your company name, logo, and accent color appear on the admin dashboard, the public tracking page, and shipment emails.
-* **Works with WooCommerce** — link any WooCommerce order to a shipment and its tracking status shows automatically on the customer's order page and order emails. High-Performance Order Storage (HPOS) compatible.
-* **Real tracking history** — every status change (Pending, Processing, Picked Up, In Transit, At Facility, Out for Delivery, Delivered, Failed Delivery, Cancelled) is logged with a location, a note, and a timestamp, and shown to customers as a visual progress stepper.
-* **Automatic email notifications** — shipment-created and status-update emails can go out to the sender, the receiver, and the site admin, using a clean HTML template with your branding. By default emails only send when a working SMTP sender is detected, so you never get silent failures from unreliable default mail delivery; a setting lets you send anyway if your host or mail plugin is reliable.
-* **Extensible for developers** — filter and action hooks (`workparcel_statuses`, `workparcel_shipment_created`, `workparcel_shipment_updated`, `workparcel_status_changed`, `workparcel_tracking_event_added`) let you connect Workparcel to other plugins and custom workflows.
-* **Fast and self-contained** — its own database tables, its own capabilities, no bloat, no page builder dependency, and admin assets that only load on Workparcel screens.
+= Why use Workparcel? =
 
-= Core Features =
+* **Manage shipments from WordPress** — create, edit, search, and organize shipments from a dedicated dashboard with shipment statistics and status filters.
+* **Give customers branded parcel tracking** — publish a tracking page on your website with your company identity and a clear shipment progress timeline.
+* **Connect WooCommerce orders** — link a shipment to a WooCommerce order and display its tracking information in the customer's order view and order emails. Compatible with High-Performance Order Storage (HPOS).
+* **Keep a complete tracking history** — record shipment status changes with locations, notes, and timestamps so staff and customers can follow progress.
+* **Notify the right people** — send branded HTML emails when shipments are created or their status changes, with separate notification options for senders, receivers, and administrators.
+* **Support scanning workflows** — use a USB or Bluetooth barcode scanner to create shipments, update statuses, and assign registered drivers or customers from a front-end Scan page.
+* **Connect other systems** — use the toggleable REST API and developer hooks to integrate shipment workflows with other WordPress plugins and external applications.
+* **Keep control of your data** — shipment and tracking records are stored in your own WordPress database. Workparcel does not require a separate third-party tracking subscription.
 
-* Shipment management dashboard with live stats and recent shipments
-* Automatic, prefixable tracking number generation
-* Shipment statuses (extendable with the `workparcel_statuses` filter) with a visual progress stepper on the tracking page
-* Full tracking history/timeline per shipment
-* Public tracking page via the `[workparcel_tracking]` shortcode — plain, full-width, and theme-agnostic so it matches any WordPress theme instead of fighting it
-* Search and status filtering in the admin shipment list
-* Company branding: logo, name, address, phone, email, and a custom accent color
-* WooCommerce order tracking integration (HPOS compatible)
-* HTML email notifications for shipment creation and status updates (sender, receiver, admin)
-* Role-based capabilities for viewing, creating, editing, and deleting shipments
-* Translation-ready strings
-* Developer hooks and filters for third-party integrations
-* Printable/PDF-ready shipment invoice with a real, scannable Code 128 barcode, shipper/receiver details, package info, and tracking history
-* Optional shipment photo and Proof of Delivery (signature + photo) uploads, shown on the invoice and in emails when set
-* Optional, shortcode-based Scan page: create shipments, update status, or assign a driver/customer by scanning with any USB/Bluetooth barcode scanner — no wp-admin login required
-* Customers registry: register drivers and receivers, each with an auto-generated Scan ID
-* REST API (toggleable) for shipments, customers, and a public read-only tracking lookup
+= Key features =
+
+* Shipment dashboard with totals, status breakdown, and recent shipments.
+* Create and manage shipments with sender, receiver, and delivery details.
+* Automatically generated tracking numbers with an optional prefix.
+* Configurable shipment statuses and a visual progress stepper on the public tracking page.
+* Tracking timeline with status, location, note, and date/time information.
+* Public tracking page using the `[workparcel_tracking]` shortcode.
+* Searchable and filterable shipment list in the WordPress admin area.
+* Company profile and branding, including company name, logo, contact details, and accent colour.
+* WooCommerce order integration with HPOS compatibility.
+* Branded HTML email notifications for shipment creation and status updates.
+* Notification controls for sender, receiver, and site administrator.
+* Printable shipment invoices with a scannable Code 128 barcode and shipment history. Use your browser's Print option to save the invoice as PDF.
+* Optional shipment photo and Proof of Delivery attachments, including a delivery signature and photo.
+* Optional front-end Scan page using the `[workparcel_scan]` shortcode.
+* Customer registry for drivers and receivers, with automatically generated 11-character Scan IDs.
+* Barcode scanning workflows for shipment creation, status updates, and driver/customer assignment.
+* Toggleable REST API for shipments, customers, and public read-only tracking lookup.
+* Developer actions and filters for custom integrations.
+* Translation-ready strings and responsive public tracking layout.
 
 = Who is Workparcel for? =
 
-* Courier and delivery businesses that want their own branded tracking page instead of a third-party tracking widget
-* WooCommerce stores that want order tracking without a heavyweight shipping suite
-* Freight, cargo, and logistics companies that need an internal shipment dashboard
-* Agencies building a shipping/tracking site for a client
+* **Courier and delivery companies** that want to manage shipments and provide customers with tracking on their own website.
+* **WooCommerce store owners** who need to connect physical orders to shipment tracking without adopting a large shipping suite.
+* **Freight and logistics businesses** that need shipment records, delivery status history, and internal workflows.
+* **WordPress agencies and developers** building courier, delivery, cargo, or e-commerce websites for clients.
 
 == Installation ==
 
-1. In your WordPress admin, go to **Plugins → Add New → Upload Plugin** and upload the Workparcel `.zip` file (or upload the `workparcel` folder to `/wp-content/plugins/` via FTP).
-2. Activate Workparcel from the Plugins screen.
-3. Open **Workparcel** in the WordPress admin menu to see your dashboard.
-4. Go to **Workparcel → Settings** and fill in your company name, logo, and accent color.
-5. Create a page, add the `[workparcel_tracking]` shortcode to it, then set that page under **Workparcel → Settings → General → Tracking page**.
-6. Create your first shipment under **Workparcel → Add Shipment**.
+1. In your WordPress dashboard, go to **Plugins → Add New → Upload Plugin** and upload the Workparcel ZIP file. You can also upload the extracted `workparcel` folder to `/wp-content/plugins/` using FTP or your hosting file manager.
+2. Activate **Workparcel** from the Plugins screen.
+3. Open **Workparcel** in the WordPress admin menu to view the dashboard.
+4. Go to **Workparcel → Settings** and add your company details, logo, and accent colour.
+5. Create a page and add the `[workparcel_tracking]` shortcode. Select that page under **Workparcel → Settings → General → Tracking page**.
+6. Open **Workparcel → Add Shipment** to create your first shipment and tracking number.
+7. For WooCommerce, open an order and use the **Workparcel Tracking** box to link its tracking number. For barcode scanning, enable the Scan page under **Settings → Scan & API** and add the `[workparcel_scan]` shortcode to a page.
 
 == Frequently Asked Questions ==
 
-= How do customers track a shipment? =
+= How do customers track a parcel? =
 
-Create a page containing the `[workparcel_tracking]` shortcode and set it as your Tracking Page in Settings. Give the customer their tracking number — they enter it on that page to see live status and history.
+Create a WordPress page, add the `[workparcel_tracking]` shortcode, and select that page under **Workparcel → Settings → General → Tracking page**. Give customers the tracking number for their shipment. They can enter it on your website to view the current status and tracking history.
 
-= Does Workparcel require an external tracking service or subscription? =
+= Does Workparcel need an external tracking service or subscription? =
 
-No. Everything — shipments, statuses, and tracking history — is stored in your own WordPress database. There's no external API and no recurring cost.
+No. Workparcel stores shipment records, statuses, and tracking history in your WordPress database and provides the tracking page on your own website. It does not require a separate third-party tracking subscription.
 
-= Does this work with WooCommerce? =
+= Can I use Workparcel with WooCommerce? =
 
-Yes. Workparcel is High-Performance Order Storage (HPOS) compatible. Open any WooCommerce order and use the "Workparcel Tracking" box to link it to a shipment by tracking number — the shipment's status then appears automatically on the customer's order view and order emails.
+Yes. Workparcel supports WooCommerce and declares compatibility with High-Performance Order Storage (HPOS). Link a shipment to an order using the **Workparcel Tracking** box on the order edit screen. The tracking information can then appear on the customer's order view and in order emails.
 
-= Will Workparcel send emails automatically? =
+= Can I add my company's logo and colours? =
 
-Yes, if you want it to. Under Settings → Notifications you can choose to email the sender, the receiver, and/or the admin whenever a shipment is created or its status changes. To avoid emails silently failing, Workparcel only sends them when it detects a working SMTP sender (a plugin like WP Mail SMTP, FluentSMTP, Easy WP SMTP, or Post SMTP, or a defined SMTP_HOST). If no SMTP sender is detected, notifications are skipped rather than sent through an unreliable default mail transport — unless you tick "Send notifications anyway" under Settings → Notifications (for example when you use an API-based mailer that Workparcel cannot detect).
+Yes. Add your company profile and logo in Workparcel Settings, then choose an accent colour under **Settings → Appearance**. Workparcel uses your branding across supported dashboard, tracking page, invoice, and email areas.
 
-= Can I change the colors to match my brand? =
+= Does Workparcel send shipment email notifications? =
 
-Yes. Settings → Appearance includes a color picker that sets the accent color used across the admin dashboard, the public tracking page, and email notifications.
+Yes. Under **Settings → Notifications**, choose whether to notify the sender, receiver, and/or site administrator when a shipment is created or its status changes. Workparcel checks for a supported SMTP sender before sending by default to help avoid unreliable default mail delivery. You can enable **Send notifications anyway** when your mail setup is reliable but is not detected automatically.
 
-= Can I delete all shipment data when uninstalling? =
+= Can I print a shipment invoice? =
 
-Yes. Enable "Delete data on uninstall" under Settings → Advanced before you uninstall the plugin.
+Yes. Open a shipment and select **View Invoice**. The invoice includes the tracking number, shipper and receiver details, package information, barcode, and shipment history. Use your browser's **Print → Save as PDF** option to save a PDF copy.
 
-= Is Workparcel translation-ready? =
+= Does Workparcel support Proof of Delivery? =
 
-Yes, all strings are wrapped for translation using the `workparcel` text domain.
+Yes. You can optionally attach a delivery signature and photo to a shipment using the WordPress Media Library. You can also add an optional shipment photo. When provided, supported attachments appear on the invoice and in shipment emails.
 
-= Can I print or download a shipment invoice? =
+= Can I use a barcode scanner? =
 
-Yes. Open any shipment and click "View Invoice" for a clean, printable invoice with the tracking number, shipper/receiver details, package info, and tracking history. Use your browser's Print → Save as PDF to download it.
-
-= Can I attach a photo or a delivery signature to a shipment? =
-
-Yes, both are optional. On the Add/Edit Shipment screen you can attach a shipment/package photo and, once delivered, a Proof of Delivery signature and photo — all pulled from your WordPress Media Library. When set, they appear on the invoice and in the shipment emails.
-
-= Does Workparcel support barcode scanners? =
-
-Yes. Under Settings → Scan & API, enable the Scan page and place the `[workparcel_scan]` shortcode on any WordPress page — no wp-admin login needed. A logged-in staff member with shipment permissions can use it directly; anyone else (a driver or customer) signs in with their own Scan ID first. Connect any USB or Bluetooth barcode scanner (they work like a keyboard) and scan a label to instantly create a shipment, update its status, or assign it to a driver or customer.
+Yes. Enable the Scan page under **Settings → Scan & API** and add the `[workparcel_scan]` shortcode to a WordPress page. Compatible USB and Bluetooth barcode scanners work like a keyboard. Depending on the user's permissions, the Scan page can be used to create shipments, update shipment statuses, or assign a registered driver or customer.
 
 = What is a Scan ID? =
 
-An automatically generated, 11-character ID given to each driver or customer you register under Workparcel → Customers. It's how they sign in to the public Scan page without needing a WordPress account, and it's also how you assign a shipment to them — scan the shipment, then scan their Scan ID.
+A Scan ID is an automatically generated, unique 11-character ID assigned to a driver or receiver registered under **Workparcel → Customers**. A registered person can use their Scan ID to access the enabled Scan page without a WordPress account, subject to the Scan page's permissions.
 
-= Does Workparcel have a REST API? =
+= Does Workparcel provide a REST API? =
 
-Yes, under Settings → Scan & API. It's on by default and covers shipments (list, create, update, delete, status changes), customers, and a public read-only tracking lookup. Authenticated endpoints require a WordPress user with the matching Workparcel capability — use an Application Password from your user profile for external access.
+Yes. The API can be enabled or disabled under **Settings → Scan & API**. It provides endpoints for shipment and customer workflows, plus a public read-only tracking lookup. Authenticated endpoints use WordPress capability checks. External applications can authenticate with a WordPress Application Password belonging to a user with the required Workparcel capability.
+
+= Can developers extend Workparcel? =
+
+Yes. Workparcel provides actions and filters for custom integrations, including shipment creation and update events, status changes, tracking events, customer creation, and shipment assignment. See the plugin code and REST API settings for integration details.
+
+= Can I remove shipment data when uninstalling Workparcel? =
+
+Yes. Enable **Delete data on uninstall** under **Workparcel → Settings → Advanced** before uninstalling the plugin. Leave this option disabled to retain your stored shipment data.
+
+= Is Workparcel translation-ready? =
+
+Yes. Workparcel uses the `workparcel` text domain and its user-facing strings are prepared for translation.
 
 == Screenshots ==
 
-1. Dashboard — shipment totals, status breakdown, and recent shipments at a glance.
-2. Shipments — a searchable, filterable list with color-coded status badges.
-3. Add/Edit Shipment — sender, recipient, and shipping details organized into clear sections, plus the tracking timeline.
-4. Public tracking page — a plain, full-width, theme-agnostic tracker with a live progress stepper.
-5. Settings — company branding, your own accent color, and notification preferences.
+1. Dashboard — shipment totals, status breakdown, and recent shipments.
+2. Shipments — search and filter shipments with colour-coded status labels.
+3. Add/Edit Shipment — enter sender, receiver, and shipment details and review the tracking timeline.
+4. Public tracking page — let customers look up a parcel and follow its shipment progress.
+5. Settings — configure company branding, appearance, and notification preferences.
 
 == Changelog ==
+
+= 1.1.2 =
+* Improved: rewrote the plugin directory listing, feature descriptions, installation guidance, and FAQs to make Workparcel's shipment management, parcel tracking, WooCommerce, scanning, and API capabilities clearer.
+* Updated: plugin version metadata to 1.1.2. No database schema changes are included in this release.
 
 = 1.1.1 =
 * Fixed: updating a shipment through the REST API (for example a PATCH with only a status) no longer wipes the other fields, resets the status to Pending or generates a new tracking number. Missing fields now keep their stored value.
@@ -210,6 +224,9 @@ Yes, under Settings → Scan & API. It's on by default and covers shipments (lis
 * Initial MVP release.
 
 == Upgrade Notice ==
+
+= 1.1.2 =
+Listing and documentation refresh with updated version metadata. No database migration or additional setup is required.
 
 = 1.1.1 =
 Important fixes: REST updates no longer erase shipment data, event times use your site timezone, and driver names no longer appear on the public tracking page. Includes a small automatic database update (one new column).
